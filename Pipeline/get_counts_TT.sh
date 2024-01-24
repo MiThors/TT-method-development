@@ -2,6 +2,7 @@
 # 22 autosomes, and for as many pairwise individual comparisons as you choose.
 # 'Ind' is a keyword representing the full vcf filenames and paths, which is assigned by the USER in 'get_file_name.py'.
 # In the example below, jobs will be submitted to count sample configurations for 3 pairwise comparisons: Ind1 vs Ind2, Ind1 vs Ind3, Ind2 vs Ind3.
+# POINTLESS AND TO BE REMOVED
 
 declare -a ind=(Ind1 Ind2 Ind3)
 
