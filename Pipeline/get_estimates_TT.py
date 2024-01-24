@@ -41,6 +41,7 @@ def get_count_list(file_list):
 			if sum(counts)>0:
 				count_list.append(counts)
 		myf.close()
+	# ý: what is b_list doing? is it nothing? it looks like nothing.
 	b_list=[]
 	return count_list
 
