@@ -21,22 +21,18 @@ def sum_over_all_nt(a_d):
 	m7=0
 	m8=0
 	for a_nt_c in a_d:
-                nt=a_nt_c[0]
-                temp=a_nt_c[2:].split(',')
-                if nt in ['A','C','G','T']:
-                        m0+=int(temp[0])
-                        m1+=int(temp[1])
-                        m2+=int(temp[2])
-                        m3+=int(temp[3])
-                        m4+=int(temp[4])
-                        m5+=int(temp[5])
-                        m6+=int(temp[6])
-                        m7+=int(temp[7])
-                        m8+=int(temp[8])
-
-        #print a_d
-        #print (m1,m2,m3,m4,m5,m6,m7,m0,m8)
-        #raw_input()
+		nt=a_nt_c[0]
+		temp=a_nt_c[2:].split(',')
+		if nt in ['A','C','G','T']:
+			m0+=int(temp[0])
+			m1+=int(temp[1])
+			m2+=int(temp[2])
+			m3+=int(temp[3])
+			m4+=int(temp[4])
+			m5+=int(temp[5])
+			m6+=int(temp[6])
+			m7+=int(temp[7])
+			m8+=int(temp[8])
 	return (m1,m2,m3,m4,m5,m6,m7,m0+m8)
 
 def do_inverse(in_tuple):
@@ -265,7 +261,7 @@ for x in temp:
 	if x[:len('chr')]=='chr':
 		d=x.split('_')
 		#print(d)
-		pop_tuple=(d[1],d[3]))
+		pop_tuple=(d[1],d[3])
 		#print(pop_tuple=)
 		#input()
 		if not pop_tuple in COND_file_dict.keys():
