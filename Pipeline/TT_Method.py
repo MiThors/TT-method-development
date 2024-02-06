@@ -14,10 +14,27 @@ from zipfile import ZipFile
 
 # Arguments from commandline using argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--in",  nargs=2, help="2 genotype files for populations to compare", required=True)
-parser.add_argument("-t", "--type", choices=['vcf', 'tped', 'bam'], help="type of genotype files input", required=True)
-parser.add_argument("-a", "--ancestral", help="file containing ancestral states", required=True)
-parser.add_argument("-k", "--keywords",  nargs=2, help="names of 2 populations, MUST be same order as in --in")
+parser.add_argument("-i", "--in",
+                    required = True, 
+                    nargs = 2,
+                    help = "2 genotype files for populations to compare")
+parser.add_argument("-t", "--type", 
+                    required = True, 
+                    choices = ['vcf', 'tped', 'bam'], 
+                    help = "type of genotype files input")
+parser.add_argument("-a", "--ancestral",  
+                    required = True, 
+                    help = "file containing ancestral states")
+parser.add_argument("-k", "--keywords",  
+                    nargs = 2, 
+                    default = ["ind1", "ind2"],
+                    help = "names of 2 populations, MUST be same order as in --in")
+parser.add_argument("-c", "--chromosomes", 
+                    action = "store_true", 
+                    help = "optional flag to indicate that all chromosomes are in the same file")
+parser.add_argument("-o", "--out", 
+                    default = "TT_out_ind1_ind2",
+                    help = "optional flag to indicate that all chromosomes are in the same file")
 args = parser.parse_args()
 
 # Filtering parameters that can be changed by the user
