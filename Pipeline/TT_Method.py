@@ -13,6 +13,12 @@ import argparse
 from zipfile import ZipFile
 
 # Filtering parameters that can be changed by the user
+# These represent what you consider low and high coverage for a genotype position, as an int
+LOW_COVERAGE = 10
+HIGH_COVERAGE = 500
+# This list contains all acceptable values in the FILTERS column of a vcf file, default set to be passing all filters or a non-entry
+VCF_FILTERS = ['PASS','.']
+
 
 # Arguments from commandline using argparse
 parser = argparse.ArgumentParser()
