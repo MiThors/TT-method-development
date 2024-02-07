@@ -1,6 +1,5 @@
 import sys
 import gzip
-import get_file_name
 from zipfile import ZipFile
 
 
@@ -131,7 +130,7 @@ ind2=arg_list[3]
 #Get file name function to use ind1 ind2 etc
 outPATH='DIR_counts_per_5cm_TT'
 
-file_dict=get_file_name.get_name_file_dict()
+file_dict='Function I removed whoops, supposed to be the directory of file names.'
 vcf_file_one=vcf_path+'/'+file_dict[ind1]
 vcf_fileOne=vcf_file_one.split('.vc')
 vcf_file1=vcf_fileOne[0] + the_chr + '.vc' + vcf_fileOne[1]

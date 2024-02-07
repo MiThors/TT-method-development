@@ -1,6 +1,5 @@
 import sys
 import gzip
-import get_file_name
 from zipfile import ZipFile
 
 def get_var_form(a_list):
@@ -36,9 +35,9 @@ def get_genotype(a_list):
             return [0,'']
         b_geno=d[0]
         if len(d)>2:
-       	    if d[2]=='.':
-       	       	return [0,'']
-            coverage+=int(d[2])
+            if d[2]=='.':
+                return [0,'']
+            coverage += int(d[2])
         else:
             coverage+=int(d[1])
     return [coverage,b_geno]
@@ -131,7 +130,7 @@ outgrp=arg_list[4]
 # Get file name function to use ind1 ind2 etc and for outgroup
 outPATH='DIR_counts_per_5cm_TTO_'+outgrp
 
-file_dict=get_file_name.get_name_file_dict()
+file_dict='Dictionary that I removed in a fit of rage'
 vcf_file_one=vcf_path+'/'+file_dict[ind1]
 vcf_fileOne=vcf_file_one.split('.vc')
 vcf_file1=vcf_fileOne[0] + the_chr + '.vc' + vcf_fileOne[1]
@@ -198,25 +197,25 @@ with ZipFile(ancPath+'/Ancestral_states.zip', 'r') as z:
                         anc_pos=anc_d[0]
 
 
-	                while not vcf_pos1 == vcf_pos2 == vcf_pos_ogrp == anc_pos: # loop through to sync all vcfs and ancestral state positions
-                            if int(vcf_pos1) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
-                                l1 = myf1.readline()
-                            elif int(vcf_pos2) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
-                                l2 = myf2.readline()
-                            elif int(vcf_pos_ogrp) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
-                                ogrpl = outgrpf.readline()
-                            elif int(anc_pos) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
-                                anc_l = anc_file.readline()
-                            if l1 and l2 and ogrpl and anc_l:
-                                vcf_data1 = l1.strip().split()
-                                vcf_pos1 = vcf_data1[1]
-                                vcf_data2 = l2.strip().split()
-                                vcf_pos2 = vcf_data2[1]
-                                vcf_pos_ogrp = vcf_ogrp[1]
-                                anc_d = anc_l.decode('utf-8').strip().split()
-                                anc_pos = anc_d[0]
-                            else:
-                                break
+                    while not vcf_pos1 == vcf_pos2 == vcf_pos_ogrp == anc_pos: # loop through to sync all vcfs and ancestral state positions
+                        if int(vcf_pos1) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
+                            l1 = myf1.readline()
+                        elif int(vcf_pos2) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
+                            l2 = myf2.readline()
+                        elif int(vcf_pos_ogrp) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
+                            ogrpl = outgrpf.readline()
+                        elif int(anc_pos) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
+                            anc_l = anc_file.readline()
+                        if l1 and l2 and ogrpl and anc_l:
+                            vcf_data1 = l1.strip().split()
+                            vcf_pos1 = vcf_data1[1]
+                            vcf_data2 = l2.strip().split()
+                            vcf_pos2 = vcf_data2[1]
+                            vcf_pos_ogrp = vcf_ogrp[1]
+                            anc_d = anc_l.decode('utf-8').strip().split()
+                            anc_pos = anc_d[0]
+                        else:
+                            break
                         if not vcf_pos1 == vcf_pos2 == vcf_pos_ogrp == anc_pos:
                             break
 
