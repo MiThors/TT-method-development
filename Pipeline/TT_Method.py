@@ -12,6 +12,8 @@ import TT_functions
 import argparse
 from zipfile import ZipFile
 
+# Filtering parameters that can be changed by the user
+
 # Arguments from commandline using argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--in",
@@ -36,6 +38,3 @@ parser.add_argument("-o", "--out",
                     default = "TT_out_ind1_ind2",
                     help = "optional flag to indicate that all chromosomes are in the same file")
 args = parser.parse_args()
-
-# Filtering parameters that can be changed by the user
-
