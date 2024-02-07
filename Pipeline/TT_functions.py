@@ -31,3 +31,7 @@ def check_if_pass_coverage():
 
 def make_out_str():
     return
+
+def get_counts_vcf(ind1_file, ind2_file, anc_file, ind1_name, ind2_name, output, only_one_file):
+    if not only_one_file:
+        return
