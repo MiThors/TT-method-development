@@ -34,6 +34,20 @@ def check_if_pass_coverage():
 def make_out_str():
     return
 
+def bad_coverage(line_list, FORMAT_index, low, high):
+    '''Function to check whether or not the coverage of a position in a genome's vcf is between the set thresholds.
+    Input: the contents of a vcf line as a list, the int index of which column the FORMAT information is stored.
+    Output: True if the coverage is bad, False if it passed the check.'''
+    genotype_info = line_list[FORMAT_index].split(':')
+    if 'GT' in genotype_info and 'DP' in genotype_info:
+        depth_index = genotype_info.index('DP')
+        genotype_values = line_list[FORMAT_index + 1].split(':')
+        depth = int(genotype_values[depth_index])
+        if depth > low and depth < high:
+            return False
+        else: return True
+    else: return True
+
 def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for ind1 and ind2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
     ind1, ind2, anc = filepaths for all files, list of one or more
@@ -76,8 +90,8 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                 while l1 and l2 and la and (sample < 100):
                     count += 1
                     # Open the next lines which should have actual data
-                    l1=ind_1.readline().strip().split()
-                    l2=ind_2.readline().strip().split()
+                    l1=file_1.readline().strip().split()
+                    l2=file_2.readline().strip().split()
                     la=ancestral.readline().strip().split()
                     # Make sure that the ancestral that had to be initialised is actually existing.
                     if la == 'Init': 
@@ -89,10 +103,10 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     POS_A = int(la[ancestral_POS])
                     while not POS_1 == POS_2 == POS_A:
                         if POS_1 == min(POS_1, POS_2, POS_A):
-                            l1=ind_1.readline().strip().split()
+                            l1=file_1.readline().strip().split()
                             POS_1 = int(l1[ind1_POS])
                         elif POS_2 == min(POS_1, POS_2, POS_A):
-                            l2=ind_2.readline().strip().split()
+                            l2=file_2.readline().strip().split()
                             POS_2 = int(l2[ind2_POS])
                         elif POS_A == min(POS_1, POS_2, POS_A):
                             la=ancestral.readline().strip().split()
@@ -105,7 +119,6 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     # Series of checks to make sure that we can keep going
                     if la[ancestral_SUPPORT] != '3': continue
                     elif l1[ind1_QUAL] == '.' or l2[ind2_QUAL] == '.': continue
-                    elif l1[ind1_FILTER] not in FILTERS or l2[ind2_FILTER] not in FILTERS: continue
-                    elif bad_coverage(l1, ind1_FORMAT) or bad_coverage(l2, ind2_FORMAT): continue
-                    
+                    elif l1[ind1_FILTER] not in filters or l2[ind2_FILTER] not in filters: continue
+                    elif bad_coverage(l1, ind1_FORMAT, low_cov, high_cov) or bad_coverage(l2, ind2_FORMAT, low_cov, high_cov): continue
     return
