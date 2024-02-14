@@ -46,6 +46,7 @@ parser.add_argument("-c", "--chromosomes",
 parser.add_argument("-o", "--out", 
                     default = "TT_out_ind1_ind2",
                     help = "optional flag to indicate that all chromosomes are in the same file")
+parser.add_argument("--test", action = "store_true")
 args = parser.parse_args()
 
 # Turn args into informatively named variables
@@ -58,9 +59,19 @@ out_dir = args.out
 chr_in_one_file = args.chromosomes
 
 # Check that filepaths are the same lengths
-length = len(files_ind1)
-if any(len(lst) != length for lst in [files_ind2, files_anc]):
-    print("Error: Unequal amount of files for ind1, ind2 or ancestral. Double check you are including all intended files.")
+file_tot = len(files_ind1)
+if any(len(lst) != file_tot for lst in [files_ind2, files_anc]):
+    print("Error: Unequal amount of files for ind1, ind2 or ancestral.")
+    print(f'Files given for ind1 are: {files_ind1}')
+    print(f'Files given for ind2 are: {files_ind2}')
+    print(f'Files given for ancestral states are: {files_anc}')
+    exit(1)
+
+if chr_in_one_file and file_tot != 1:
+    print("Error: User indicated all chromosomes are in one file, but more than one file per genome was given.")
+    print(f'Files given for ind1 are: {files_ind1}')
+    print(f'Files given for ind2 are: {files_ind2}')
+    print(f'Files given for ancestral states are: {files_anc}')
     exit(1)
 
 # Other variables
@@ -68,9 +79,11 @@ nucl=['A','C','G','T']
 nt_set=set(nucl)
 
 # Make output dir, will complain if it already exists, which is why this is so early in the script
-#os.mkdir(out_dir)
+if not args.test: os.mkdir(out_dir)
 
-#if file_type == 'vcf': TT_functions.get_counts_vcf(file1_path, file2_path, anc_path, ind1_key, ind2_key, out_dir, chr_in_one_file)
-
-
-
+if file_type == 'vcf': 
+    # This function does a lot: see information in TT_functions. It checks for fomratting errors and filters data based on parameters.
+    if chr_in_one_file:
+        TT_functions.get_counts_vcf(files_ind1, files_ind2, files_anc, low_coverage, high_coverage, vcf_filters)
+    else: 
+        for file in :
