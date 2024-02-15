@@ -117,19 +117,14 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     exit(1)
                 # While loop for while the files exist and less than 100 sampels have been taken
                 while l1 and l2 and la:
-                    count += 1
                     # Open the next lines which should have actual data
                     l1=file_1.readline().strip().split()
                     l2=file_2.readline().strip().split()
                     la=ancestral.readline().strip().split()
-                    # Make sure that the ancestral that had to be initialised is actually existing.
-                    if la == 'Init': 
-                        print(f"Ancestral file can't be read, throw exception.")
-                        break
                     # Get positions and loop to align positions if needed. 
                     POS_1 = int(l1[ind1_POS])
                     POS_2 = int(l2[ind2_POS])
-                    POS_A = int(la[ancestral_POS])
+                    POS_A = int(la[anc_POS])
                     while not POS_1 == POS_2 == POS_A:
                         if POS_1 == min(POS_1, POS_2, POS_A):
                             l1=file_1.readline().strip().split()
@@ -139,14 +134,14 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                             POS_2 = int(l2[ind2_POS])
                         elif POS_A == min(POS_1, POS_2, POS_A):
                             la=ancestral.readline().strip().split()
-                            POS_A = int(la[ancestral_POS])
+                            POS_A = int(la[anc_POS])
                         else: break
                     # Check to make sure the positions are all the same. 
                     if not POS_1 == POS_2 == POS_A: 
                         print("Error: Files never managed to be set at the same position.")
-                        break
+                        exit(1)
                     # Series of checks to make sure that we can keep going
-                    if la[ancestral_SUPPORT] != '3': continue
+                    if la[anc_SUPPORT] != '3': continue
                     elif l1[ind1_QUAL] == '.' or l2[ind2_QUAL] == '.': continue
                     elif l1[ind1_FILTER] not in filters or l2[ind2_FILTER] not in filters: continue
                     elif bad_coverage(l1, ind1_FORMAT, low_cov, high_cov) or bad_coverage(l2, ind2_FORMAT, low_cov, high_cov): continue
