@@ -61,33 +61,62 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                 # This is a little loop to skip past the VCF file headers for both vcf files
                 l1=file_1.readline()
                 l2=file_2.readline()
+                la=ancestral.readline()
                 while l1[0:2]=='##':
                     l1=file_1.readline()
                 while l2[0:2]=='##':
                     l2=file_2.readline()
                 # The line that should be left is the names of all the columns, and so we can get what column the POS, QUAL and FILTER, etc. are at
                 ind1_columns = l1.strip().split()
-                ind2_columns = l1.strip().split()
-                try:
-                    ind1_POS = ind1_columns.index("POS")
+                ind2_columns = l2.strip().split()
+                anc_columns = la.strip().split()
+                try: ind1_POS = ind1_columns.index("POS")
                 except ValueError:
                     print(f"Could not find 'POS' column in vcf file {ind1}. Please check that formatting is correct.")
                     exit(1)
-                ind2_POS = ind2_columns.index("POS")
-                ind1_QUAL = ind1_columns.index("QUAL")
-                ind2_QUAL = ind2_columns.index("QUAL")
-                ind1_FILTER = ind1_columns.index("FILTER")
-                ind2_FILTER = ind2_columns.index("FILTER")
-                ind1_FORMAT = ind1_columns.index("FORMAT")
-                ind2_FORMAT = ind2_columns.index("FORMAT")
+                try: ind2_POS = ind2_columns.index("POS")
+                except ValueError:
+                    print(f"Could not find 'POS' column in vcf file {ind2}. Please check that formatting is correct.")
+                    exit(1)
+                try: ind1_QUAL = ind1_columns.index("QUAL")
+                except ValueError:
+                    print(f"Could not find 'QUAL' column in vcf file {ind1}. Please check that formatting is correct.")
+                    exit(1)
+                try: ind2_QUAL = ind2_columns.index("QUAL")
+                except ValueError:
+                    print(f"Could not find 'QUAL' column in vcf file {ind2}. Please check that formatting is correct.")
+                    exit(1)
+                try: ind1_FILTER = ind1_columns.index("FILTER")
+                except ValueError:
+                    print(f"Could not find 'FILTER' column in vcf file {ind1}. Please check that formatting is correct.")
+                    exit(1)
+                try: ind2_FILTER = ind2_columns.index("FILTER")
+                except ValueError:
+                    print(f"Could not find 'FILTER' column in vcf file {ind2}. Please check that formatting is correct.")
+                    exit(1)
+                try: ind1_FORMAT = ind1_columns.index("FORMAT")
+                except ValueError:
+                    print(f"Could not find 'FORMAT' column in vcf file {ind1}. Please check that formatting is correct.")
+                    exit(1)
+                try: ind2_FORMAT = ind2_columns.index("FORMAT")
+                except ValueError:
+                    print(f"Could not find 'FORMAT' column in vcf file {ind2}. Please check that formatting is correct.")
+                    exit(1)
                 # This stuff is HARD CODED so be careful of that
-                ancestral_POS = 0 # HARD CODED
-                ancestral_SUPPORT = 2
-                sample = 0
-                count = 0
-                la = 'Init'
+                try: anc_POS = anc_columns.index("POS")
+                except ValueError:
+                    print(f"Could not find 'POS' column in vcf file {anc}. Please check that formatting is correct.")
+                    exit(1)
+                try: anc_SUPPORT = anc_columns.index("SUPPORT")
+                except ValueError:
+                    print(f"Could not find 'SUPPORT' column in vcf file {anc}. Please check that formatting is correct.")
+                    exit(1)
+                try: anc_NUCL = anc_columns.index("NUCL")
+                except ValueError:
+                    print(f"Could not find 'NUCL' column in vcf file {anc}. Please check that formatting is correct.")
+                    exit(1)
                 # While loop for while the files exist and less than 100 sampels have been taken
-                while l1 and l2 and la and (sample < 100):
+                while l1 and l2 and la:
                     count += 1
                     # Open the next lines which should have actual data
                     l1=file_1.readline().strip().split()
