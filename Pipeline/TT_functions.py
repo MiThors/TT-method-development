@@ -14,6 +14,7 @@ def parse_var_genotypes():
     return
 
 def get_genotype():
+    
     return
 
 def orient_and_get_count():
@@ -117,11 +118,11 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     exit(1)
                 # While loop for while the files exist and less than 100 sampels have been taken
                 while l1 and l2 and la:
-                    # Open the next lines which should have actual data
+                    # Get positions and loop to align positions if needed. 
                     l1=file_1.readline().strip().split()
                     l2=file_2.readline().strip().split()
                     la=ancestral.readline().strip().split()
-                    # Get positions and loop to align positions if needed. 
+                    if not l1 or not l2 or not la: continue
                     POS_1 = int(l1[ind1_POS])
                     POS_2 = int(l2[ind2_POS])
                     POS_A = int(la[anc_POS])
@@ -145,4 +146,6 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     elif l1[ind1_QUAL] == '.' or l2[ind2_QUAL] == '.': continue
                     elif l1[ind1_FILTER] not in filters or l2[ind2_FILTER] not in filters: continue
                     elif bad_coverage(l1, ind1_FORMAT, low_cov, high_cov) or bad_coverage(l2, ind2_FORMAT, low_cov, high_cov): continue
+                    genotype_1=get_genotype(l1, ind1_FORMAT)
+                    genotype_2=get_genotype(l2, ind2_FORMAT) 
     return

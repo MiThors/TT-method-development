@@ -71,6 +71,6 @@ nt_set=set(nucl)
 if not args.test: os.mkdir(out_dir)
 
 if file_type == 'vcf': 
-    for i in file_tot:
+    for i in range(file_tot):
         TT_functions.get_counts_vcf(files_ind1[i], files_ind2[i], files_anc[i], low_coverage, high_coverage, vcf_filters)
         # And then you will need to combine them somewhere here
