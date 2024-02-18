@@ -56,85 +56,58 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
     low_cov, high_cov = coverage thresholds for filtering, set up in main method file
     filters = list of values considered acceptable for FILTER field of vcf file
     Returns all eight count scenarios in a dictionary, keys are chromosomes, one list of counts per chromosome'''
+    # Variables
+    nucl = ['A','C','G','T']
+    nt_set = set(nucl)
+    # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(ind1, 'rt', encoding='utf-8') as file_1:
             with gzip.open(ind2, 'rt', encoding='utf-8') as file_2:
                 # This is a little loop to skip past the VCF file headers for both vcf files
-                l1=file_1.readline()
-                l2=file_2.readline()
-                la=ancestral.readline()
-                while l1[0:2]=='##':
-                    l1=file_1.readline()
-                while l2[0:2]=='##':
-                    l2=file_2.readline()
+                l1 = file_1.readline()
+                l2 = file_2.readline()
+                la = ancestral.readline()
+                while l1[0:2] == '##':
+                    l1 = file_1.readline()
+                while l2[0:2] == '##':
+                    l2 = file_2.readline()
                 # The line that should be left is the names of all the columns, and so we can get what column the POS, QUAL and FILTER, etc. are at
                 ind1_columns = l1.strip().split()
                 ind2_columns = l2.strip().split()
                 anc_columns = la.strip().split()
-                try: ind1_POS = ind1_columns.index("POS")
+                try: 
+                    ind1_POS = ind1_columns.index("POS")
+                    ind2_POS = ind2_columns.index("POS")
+                    ind1_QUAL = ind1_columns.index("QUAL")
+                    ind2_QUAL = ind2_columns.index("QUAL")
+                    ind1_FILTER = ind1_columns.index("FILTER")
+                    ind2_FILTER = ind2_columns.index("FILTER")
+                    ind1_FORMAT = ind1_columns.index("FORMAT")
+                    ind2_FORMAT = ind2_columns.index("FORMAT")
+                    anc_POS = anc_columns.index("POS")
+                    amc_NUCL = anc_columns.index("NUCL")
                 except ValueError:
-                    print(f"Could not find 'POS' column in vcf file {ind1}. Please check that formatting is correct.")
-                    exit(1)
-                try: ind2_POS = ind2_columns.index("POS")
-                except ValueError:
-                    print(f"Could not find 'POS' column in vcf file {ind2}. Please check that formatting is correct.")
-                    exit(1)
-                try: ind1_QUAL = ind1_columns.index("QUAL")
-                except ValueError:
-                    print(f"Could not find 'QUAL' column in vcf file {ind1}. Please check that formatting is correct.")
-                    exit(1)
-                try: ind2_QUAL = ind2_columns.index("QUAL")
-                except ValueError:
-                    print(f"Could not find 'QUAL' column in vcf file {ind2}. Please check that formatting is correct.")
-                    exit(1)
-                try: ind1_FILTER = ind1_columns.index("FILTER")
-                except ValueError:
-                    print(f"Could not find 'FILTER' column in vcf file {ind1}. Please check that formatting is correct.")
-                    exit(1)
-                try: ind2_FILTER = ind2_columns.index("FILTER")
-                except ValueError:
-                    print(f"Could not find 'FILTER' column in vcf file {ind2}. Please check that formatting is correct.")
-                    exit(1)
-                try: ind1_FORMAT = ind1_columns.index("FORMAT")
-                except ValueError:
-                    print(f"Could not find 'FORMAT' column in vcf file {ind1}. Please check that formatting is correct.")
-                    exit(1)
-                try: ind2_FORMAT = ind2_columns.index("FORMAT")
-                except ValueError:
-                    print(f"Could not find 'FORMAT' column in vcf file {ind2}. Please check that formatting is correct.")
-                    exit(1)
-                # This stuff is HARD CODED so be careful of that
-                try: anc_POS = anc_columns.index("POS")
-                except ValueError:
-                    print(f"Could not find 'POS' column in vcf file {anc}. Please check that formatting is correct.")
-                    exit(1)
-                try: anc_SUPPORT = anc_columns.index("SUPPORT")
-                except ValueError:
-                    print(f"Could not find 'SUPPORT' column in vcf file {anc}. Please check that formatting is correct.")
-                    exit(1)
-                try: anc_NUCL = anc_columns.index("NUCL")
-                except ValueError:
-                    print(f"Could not find 'NUCL' column in vcf file {anc}. Please check that formatting is correct.")
+                    print(f"Could not find all columns in in vcf files {ind1} or {ind2}, or in ancestral file {anc}. Please check that formatting is correct.")
                     exit(1)
                 # While loop for while the files exist and less than 100 sampels have been taken
                 while l1 and l2 and la:
                     # Get positions and loop to align positions if needed. 
-                    l1=file_1.readline().strip().split()
-                    l2=file_2.readline().strip().split()
-                    la=ancestral.readline().strip().split()
+                    l1 = file_1.readline().strip().split()
+                    l2 = file_2.readline().strip().split()
+                    la = ancestral.readline().strip().split()
                     if not l1 or not l2 or not la: continue
                     POS_1 = int(l1[ind1_POS])
                     POS_2 = int(l2[ind2_POS])
                     POS_A = int(la[anc_POS])
                     while not POS_1 == POS_2 == POS_A:
                         if POS_1 == min(POS_1, POS_2, POS_A):
-                            l1=file_1.readline().strip().split()
+                            l1 = file_1.readline().strip().split()
                             POS_1 = int(l1[ind1_POS])
                         elif POS_2 == min(POS_1, POS_2, POS_A):
-                            l2=file_2.readline().strip().split()
+                            l2 = file_2.readline().strip().split()
                             POS_2 = int(l2[ind2_POS])
                         elif POS_A == min(POS_1, POS_2, POS_A):
-                            la=ancestral.readline().strip().split()
+                            la = ancestral.readline().strip().split()
                             POS_A = int(la[anc_POS])
                         else: break
                     # Check to make sure the positions are all the same. 
@@ -142,10 +115,9 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                         print("Error: Files never managed to be set at the same position.")
                         exit(1)
                     # Series of checks to make sure that we can keep going
-                    if la[anc_SUPPORT] != '3': continue
-                    elif l1[ind1_QUAL] == '.' or l2[ind2_QUAL] == '.': continue
+                    if l1[ind1_QUAL] == '.' or l2[ind2_QUAL] == '.': continue
                     elif l1[ind1_FILTER] not in filters or l2[ind2_FILTER] not in filters: continue
                     elif bad_coverage(l1, ind1_FORMAT, low_cov, high_cov) or bad_coverage(l2, ind2_FORMAT, low_cov, high_cov): continue
-                    genotype_1=get_genotype(l1, ind1_FORMAT)
-                    genotype_2=get_genotype(l2, ind2_FORMAT) 
+                    genotype_1 = get_genotype(l1, ind1_FORMAT)
+                    genotype_2 = get_genotype(l2, ind2_FORMAT) 
     return

@@ -63,10 +63,6 @@ if any(len(lst) != file_tot for lst in [files_ind2, files_anc]):
     print(f'Files given for ancestral states are: {files_anc}')
     exit(1)
 
-# Other variables
-nucl=['A','C','G','T']
-nt_set=set(nucl)
-
 # Make output dir, will complain if it already exists, which is why this is so early in the script
 if not args.test: os.mkdir(out_dir)
 
