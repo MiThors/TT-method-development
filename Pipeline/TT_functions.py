@@ -85,7 +85,7 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     ind1_FORMAT = ind1_columns.index("FORMAT")
                     ind2_FORMAT = ind2_columns.index("FORMAT")
                     anc_POS = anc_columns.index("POS")
-                    amc_NUCL = anc_columns.index("NUCL")
+                    anc_NUCL = anc_columns.index("NUCL")
                 except ValueError:
                     print(f"Could not find all columns in in vcf files {ind1} or {ind2}, or in ancestral file {anc}. Please check that formatting is correct.")
                     exit(1)
@@ -118,6 +118,5 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     if l1[ind1_QUAL] == '.' or l2[ind2_QUAL] == '.': continue
                     elif l1[ind1_FILTER] not in filters or l2[ind2_FILTER] not in filters: continue
                     elif bad_coverage(l1, ind1_FORMAT, low_cov, high_cov) or bad_coverage(l2, ind2_FORMAT, low_cov, high_cov): continue
-                    genotype_1 = get_genotype(l1, ind1_FORMAT)
-                    genotype_2 = get_genotype(l2, ind2_FORMAT) 
+                    print(l1[9:])
     return
