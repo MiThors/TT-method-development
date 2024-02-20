@@ -87,7 +87,7 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     anc_POS = anc_columns.index("POS")
                     anc_NUCL = anc_columns.index("NUCL")
                 except ValueError:
-                    print(f"Could not find all columns in in vcf files {ind1} or {ind2}, or in ancestral file {anc}. Please check that formatting is correct.")
+                    print(f"Could not find all columns in in vcf files {ind1} or {ind2}, or all columns in ancestral file {anc}. Please check that formatting is correct.")
                     exit(1)
                 # While loop for while the files exist and less than 100 sampels have been taken
                 while l1 and l2 and la:
