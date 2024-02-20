@@ -43,7 +43,10 @@ def bad_coverage(line_list, FORMAT_index, low, high):
     if 'GT' in genotype_info and 'DP' in genotype_info:
         depth_index = genotype_info.index('DP')
         genotype_values = line_list[FORMAT_index + 1].split(':')
-        depth = int(genotype_values[depth_index])
+        depth = genotype_values[depth_index]
+        if depth == '.' : 
+            return True
+        else: depth = int(depth)
         if depth > low and depth < high:
             return False
         else: return True
@@ -89,34 +92,35 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                 except ValueError:
                     print(f"Could not find all columns in in vcf files {ind1} or {ind2}, or all columns in ancestral file {anc}. Please check that formatting is correct.")
                     exit(1)
-                # While loop for while the files exist and less than 100 sampels have been taken
+                # While loop for to align positions if needed
                 while l1 and l2 and la:
-                    # Get positions and loop to align positions if needed. 
                     l1 = file_1.readline().strip().split()
                     l2 = file_2.readline().strip().split()
                     la = ancestral.readline().strip().split()
-                    if not l1 or not l2 or not la: continue
+                    if not l1 or not l2 or not la : break
                     POS_1 = int(l1[ind1_POS])
                     POS_2 = int(l2[ind2_POS])
                     POS_A = int(la[anc_POS])
                     while not POS_1 == POS_2 == POS_A:
                         if POS_1 == min(POS_1, POS_2, POS_A):
                             l1 = file_1.readline().strip().split()
-                            POS_1 = int(l1[ind1_POS])
+                            if l1: POS_1 = int(l1[ind1_POS])
+                            else: break
                         elif POS_2 == min(POS_1, POS_2, POS_A):
                             l2 = file_2.readline().strip().split()
-                            POS_2 = int(l2[ind2_POS])
+                            if l2: POS_2 = int(l2[ind2_POS])
+                            else: break
                         elif POS_A == min(POS_1, POS_2, POS_A):
                             la = ancestral.readline().strip().split()
-                            POS_A = int(la[anc_POS])
-                        else: break
+                            if la: POS_A = int(la[anc_POS])
+                            else: break
                     # Check to make sure the positions are all the same. 
                     if not POS_1 == POS_2 == POS_A: 
-                        print("Error: Files never managed to be set at the same position.")
+                        print(f"Error: Files never managed to be reach at the same position, {anc} ended at {POS_A}, {ind1} at {POS_1}, and {ind2} at {POS_2}. Please check that correct files are being compared, or file formatting.")
                         exit(1)
                     # Series of checks to make sure that we can keep going
-                    if l1[ind1_QUAL] == '.' or l2[ind2_QUAL] == '.': continue
-                    elif l1[ind1_FILTER] not in filters or l2[ind2_FILTER] not in filters: continue
-                    elif bad_coverage(l1, ind1_FORMAT, low_cov, high_cov) or bad_coverage(l2, ind2_FORMAT, low_cov, high_cov): continue
-                    print(l1[9:])
-    return
+                    if l1[ind1_QUAL] == '.' or l2[ind2_QUAL] == '.' : continue
+                    elif l1[ind1_FILTER] not in filters or l2[ind2_FILTER] not in filters : continue
+                    elif bad_coverage(l1, ind1_FORMAT, low_cov, high_cov) or bad_coverage(l2, ind2_FORMAT, low_cov, high_cov) : continue
+                    
+    return "We did it lads"
