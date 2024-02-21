@@ -35,22 +35,17 @@ def check_if_pass_coverage():
 def make_out_str():
     return
 
-def bad_coverage(line_list, FORMAT_index, low, high):
+def bad_coverage(depth, low, high):
     '''Function to check whether or not the coverage of a position in a genome's vcf is between the set thresholds.
     Input: the contents of a vcf line as a list, the int index of which column the FORMAT information is stored.
     Output: True if the coverage is bad, False if it passed the check.'''
-    genotype_info = line_list[FORMAT_index].split(':')
-    if 'GT' in genotype_info and 'DP' in genotype_info:
-        depth_index = genotype_info.index('DP')
-        genotype_values = line_list[FORMAT_index + 1].split(':')
-        depth = genotype_values[depth_index]
-        if depth == '.' : 
-            return True
-        else: depth = int(depth)
-        if depth > low and depth < high:
-            return False
-        else: return True
+    if depth == '.' : 
+        return True # Coverage is bad if undefined
+    else: depth = int(depth)
+    if depth > low and depth < high:
+        return False
     else: return True
+    
 
 def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for ind1 and ind2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
@@ -59,9 +54,10 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
     low_cov, high_cov = coverage thresholds for filtering, set up in main method file
     filters = list of values considered acceptable for FILTER field of vcf file
     Returns all eight count scenarios in a dictionary, keys are chromosomes, one list of counts per chromosome'''
-    # Variables
+    # Variable initialisation
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
+    out_dir = {}
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(ind1, 'rt', encoding='utf-8') as file_1:
@@ -79,16 +75,17 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                 ind2_columns = l2.strip().split()
                 anc_columns = la.strip().split()
                 try: 
-                    ind1_POS = ind1_columns.index("POS")
-                    ind2_POS = ind2_columns.index("POS")
-                    ind1_QUAL = ind1_columns.index("QUAL")
-                    ind2_QUAL = ind2_columns.index("QUAL")
-                    ind1_FILTER = ind1_columns.index("FILTER")
-                    ind2_FILTER = ind2_columns.index("FILTER")
-                    ind1_FORMAT = ind1_columns.index("FORMAT")
-                    ind2_FORMAT = ind2_columns.index("FORMAT")
-                    anc_POS = anc_columns.index("POS")
-                    anc_NUCL = anc_columns.index("NUCL")
+                    # Indexing for VCF format so there are no magic numbers, and as a test of correct file format given
+                    chrom_1_ind, chrom_2_ind = ind1_columns.index("#CHROM"), ind2_columns.index("#CHROM")
+                    pos_1_ind, pos_2_ind = ind1_columns.index("POS"), ind2_columns.index("POS")
+                    ref_1_ind, ref_2_ind = ind1_columns.index("REF"), ind2_columns.index("REF")
+                    alt_1_ind, alt_2_ind = ind1_columns.index("ALT"), ind2_columns.index("ALT")
+                    qual_1_ind, qual_2_ind = ind1_columns.index("QUAL"), ind2_columns.index("QUAL")
+                    filter_1_ind, filter_2_ind = ind1_columns.index("FILTER"), ind2_columns.index("FILTER")
+                    format_1_ind, format_2_ind = ind1_columns.index("FORMAT"), ind2_columns.index("FORMAT")
+                    pos_A_ind = anc_columns.index("POS")
+                    nucl_A_ind = anc_columns.index("NUCL")
+                    print()
                 except ValueError:
                     print(f"Could not find all columns in in vcf files {ind1} or {ind2}, or all columns in ancestral file {anc}. Please check that formatting is correct.")
                     exit(1)
@@ -98,29 +95,46 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     l2 = file_2.readline().strip().split()
                     la = ancestral.readline().strip().split()
                     if not l1 or not l2 or not la : break
-                    POS_1 = int(l1[ind1_POS])
-                    POS_2 = int(l2[ind2_POS])
-                    POS_A = int(la[anc_POS])
-                    while not POS_1 == POS_2 == POS_A:
-                        if POS_1 == min(POS_1, POS_2, POS_A):
+                    pos_1 = int(l1[pos_1_ind])
+                    pos_2 = int(l2[pos_2_ind])
+                    pos_A = int(la[pos_A_ind])
+                    while not pos_1 == pos_2 == pos_A:
+                        if pos_1 == min(pos_1, pos_2, pos_A):
                             l1 = file_1.readline().strip().split()
-                            if l1: POS_1 = int(l1[ind1_POS])
+                            if l1: pos_1 = int(l1[pos_1_ind])
                             else: break
-                        elif POS_2 == min(POS_1, POS_2, POS_A):
+                        elif pos_2 == min(pos_1, pos_2, pos_A):
                             l2 = file_2.readline().strip().split()
-                            if l2: POS_2 = int(l2[ind2_POS])
+                            if l2: pos_2 = int(l2[pos_2_ind])
                             else: break
-                        elif POS_A == min(POS_1, POS_2, POS_A):
+                        elif pos_A == min(pos_1, pos_2, pos_A):
                             la = ancestral.readline().strip().split()
-                            if la: POS_A = int(la[anc_POS])
+                            if la: pos_A = int(la[pos_A_ind])
                             else: break
                     # Check to make sure the positions are all the same. 
-                    if not POS_1 == POS_2 == POS_A: 
-                        print(f"Error: Files never managed to be reach at the same position, {anc} ended at {POS_A}, {ind1} at {POS_1}, and {ind2} at {POS_2}. Please check that correct files are being compared, or file formatting.")
+                    if not pos_1 == pos_2 == pos_A_ind: 
+                        print(f"Error: Files never managed to be reach at the same position, {anc} ended at {pos_A}, {ind1} at {pos_1}, and {ind2} at {pos_2}. Please check that correct files are being compared, or file formatting.")
                         exit(1)
-                    # Series of checks to make sure that we can keep going
-                    if l1[ind1_QUAL] == '.' or l2[ind2_QUAL] == '.' : continue
-                    elif l1[ind1_FILTER] not in filters or l2[ind2_FILTER] not in filters : continue
-                    elif bad_coverage(l1, ind1_FORMAT, low_cov, high_cov) or bad_coverage(l2, ind2_FORMAT, low_cov, high_cov) : continue
+                    # Series of quality and assumption checks to make sure that we can keep going
+                    if l1[qual_1_ind] == '.' or l2[qual_2_ind] == '.' : continue
+                    elif l1[filter_1_ind] not in filters or l2[filter_2_ind] not in filters : continue
+                    elif la[nucl_A_ind] not in nucl: continue # If the ancient nucleotide is not resolved, we skip
+                    elif len(l1[alt_1_ind]) > 1 or len(l2[alt_2_ind]) > 1: continue # We skip multiallelic sites as they violate assumptions
+                    # If it passes these checks, we get the genotype and coverage and check if they are also appropriate
+                    l1_format_info = l1[format_1_ind].split(':')
+                    l2_format_info = l2[format_2_ind].split(':')
+                    try:
+                        genotype_1_ind, genotype_2_ind = l1_format_info.index("GT"), l2_format_info.index("GT")
+                        coverage_1_ind, coverage_2_ind = l1_format_info.index("DP"), l2_format_info.index("DP")
+                    except ValueError:
+                        continue
+                    l1_genotype_info, l2_genotype_info,  = l1[format_1_ind + 1].split(':'), l2[format_2_ind + 1].split(':')
+                    coverage_1, coverage_2 = l1_genotype_info[coverage_1_ind], l2_genotype_info[coverage_2_ind]
+                    genotype_1, genotype_2 = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind]
+                    if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
+                    elif genotype_1.count('.') > 0 or genotype_2.count('.') > 0: continue # Check if genotypes are undefined
+                    
+
+
                     
     return "We did it lads"
