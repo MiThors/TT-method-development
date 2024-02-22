@@ -79,5 +79,7 @@ if file_type == 'vcf':
                 counts_dict[key] = [counts_dict[key][i] + add_dict[key][i] for i in range(9)]
             else: counts_dict.update({key: add_dict[key]})
 
+print(counts_dict)
+
 # When we move on to doing calculations, unless we want to print them also
        

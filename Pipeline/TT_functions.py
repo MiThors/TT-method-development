@@ -44,10 +44,28 @@ def bad_coverage(depth, low, high):
     else: return True
 
 def get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2):
-    if alt_1 == '.' and alt_2 == '.':
-        if ref_1 == ref_2 == nucl_A: return 0 # m0 = O_{0,0}
-        elif ref_1 != nucl_A: return 1 # m1 = O_{1, 0}
-        elif ref_2 != nucl_A: return 2 # m2 = O_{0, 1}
+    if alt_1 == '.' and ref_1 == nucl_A: pop1_derived = 0
+    elif alt_1 == '.' and ref_1 != nucl_A: pop1_derived = 2
+    elif ref_1 == nucl_A: pop1_derived = genotype_1.count("1")
+    else: pop1_derived = genotype_1.count("0")
+    if alt_2 == '.' and ref_2 == nucl_A: pop2_derived = 0
+    elif alt_2 == '.' and ref_2 != nucl_A: pop2_derived = 2
+    elif ref_2 == nucl_A: pop2_derived = genotype_2.count("1")
+    else: pop2_derived = genotype_2.count("0")
+
+    if pop1_derived == 0 and pop2_derived == 0: return 0 # m0 = O{0,0}
+    elif pop1_derived == 1 and pop2_derived == 0: return 1 # m1 = O{1,0}
+    elif pop1_derived == 0 and pop2_derived == 1: return 2 # m2 = O{0,1}
+    elif pop1_derived == 2 and pop2_derived == 0: return 3 # m3 = O{2,0}
+    elif pop1_derived == 0 and pop2_derived == 2: return 4 # m4 = O_{0,2}
+    elif pop1_derived == 1 and pop2_derived == 1: return 5 # m5 = O{1,1}
+    elif pop1_derived == 2 and pop2_derived == 1: return 6 # m6 = O{2,1}
+    elif pop1_derived == 1 and pop2_derived == 2: return 7 # m7 = O{1,2}
+    elif pop1_derived == 2 and pop2_derived == 2: return 8 # m8 = O{2,2}
+    else: 
+        print("Error: it seems genotype counting was able to obtain values other than (0, 1, 2) for one or both populations. According to our checks, that should not be possible, please check genotype information in vcfs.")
+        exit(1)
+        
         
 
     
