@@ -20,9 +20,6 @@ def get_genotype():
 def orient_and_get_count():
     return
 
-def check_if_ok_and_get_var_form_TT():
-    return
-
 def check_if_ok_and_get_var_form_TTo():
     return
 
@@ -57,7 +54,7 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
     # Variable initialisation
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
-    out_dir = {}
+    out_dict = {}
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(ind1, 'rt', encoding='utf-8') as file_1:
@@ -115,11 +112,19 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     if not pos_1 == pos_2 == pos_A_ind: 
                         print(f"Error: Files never managed to be reach at the same position, {anc} ended at {pos_A}, {ind1} at {pos_1}, and {ind2} at {pos_2}. Please check that correct files are being compared, or file formatting.")
                         exit(1)
+                    nucl_A = la[nucl_A_ind]
+                    ref_1, ref_2 = l1[ref_1_ind], l2[ref_2_ind]
+                    alt_1, alt_2 = l1[alt_1_ind], l2[alt_2_ind]
+                    chrom_1, chrom_2 = l1[chrom_1_ind], l2[chrom_2_ind]
                     # Series of quality and assumption checks to make sure that we can keep going
-                    if l1[qual_1_ind] == '.' or l2[qual_2_ind] == '.' : continue
+                    if chrom_1 != chrom_2: 
+                        print(f"Chromosomes are not the same for ind1 and ind2 at position {pos_1}. Please check naming and formatting.")
+                        continue 
+                    elif l1[qual_1_ind] == '.' or l2[qual_2_ind] == '.' : continue
                     elif l1[filter_1_ind] not in filters or l2[filter_2_ind] not in filters : continue
-                    elif la[nucl_A_ind] not in nucl: continue # If the ancient nucleotide is not resolved, we skip
-                    elif len(l1[alt_1_ind]) > 1 or len(l2[alt_2_ind]) > 1: continue # We skip multiallelic sites as they violate assumptions
+                    elif nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
+                    elif len(alt_1) > 1 or len(alt_2) > 1: continue # We skip multiallelic sites as they violate assumptions
+                    elif len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Another check for multiallelic site
                     # If it passes these checks, we get the genotype and coverage and check if they are also appropriate
                     l1_format_info = l1[format_1_ind].split(':')
                     l2_format_info = l2[format_2_ind].split(':')
@@ -133,8 +138,9 @@ def get_counts_vcf(ind1, ind2, anc, low_cov, high_cov, filters):
                     genotype_1, genotype_2 = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind]
                     if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
                     elif genotype_1.count('.') > 0 or genotype_2.count('.') > 0: continue # Check if genotypes are undefined
+                    # Check if current chromosome exists in the dict already, if not add another key for that
+                    if chrom_1 not in out_dict: out_dict.update({chrom_1 : [0, 0, 0, 0, 0, 0, 0, 0, 0]})
+                    
                     
 
-
-                    
     return "We did it lads"
