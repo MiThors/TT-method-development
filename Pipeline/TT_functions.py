@@ -170,7 +170,7 @@ def get_counts_vcf(pop1, pop2, anc, low_cov, high_cov, filters):
                     genotype_1, genotype_2 = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind]
                     
                     if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
-                    elif genotype_1.count('.') > 0 or genotype_2.count('.') > 0: continue # Check if genotypes are undefined
+                    elif '.' in genotype_1 or '.' in genotype_2: continue # Check if genotypes are undefined
                     # Check if current chromosome exists in the dict already, if not add another key for that
                     if chrom_1 not in out_dict: out_dict.update({chrom_1 : [0, 0, 0, 0, 0, 0, 0, 0, 0]})
                     # Get the type of sample configuration, represented as the index of m0, m1, ... m8
