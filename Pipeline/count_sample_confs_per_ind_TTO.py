@@ -196,7 +196,6 @@ with ZipFile(ancPath+'/Ancestral_states.zip', 'r') as z:
                         vcf_pos_ogrp=vcf_ogrp[1]
                         anc_pos=anc_d[0]
 
-
                     while not vcf_pos1 == vcf_pos2 == vcf_pos_ogrp == anc_pos: # loop through to sync all vcfs and ancestral state positions
                         if int(vcf_pos1) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
                             l1 = myf1.readline()
