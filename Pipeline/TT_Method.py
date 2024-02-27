@@ -6,7 +6,7 @@ Please see the Manual (ReadMe.md) or use the command 'TT_Method.py --help' for h
 Milo Thordarson: anth2886@student.uu.se'''
 
 # Module loading
-import TT_functions
+import functions
 import argparse
 import os
 
@@ -73,7 +73,7 @@ counts_dict = {}
 if file_type == 'vcf': 
     for i in range(file_tot):
         # Get the counts for a vcf file from this function, returns a dictionary with {chrom: m0, m1, m2, m3, m4, m5, m6, m7, m8} structure
-        add_dict = TT_functions.get_counts_vcf(files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters)
+        add_dict = functions.get_counts_vcf_TT(files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters)
         for key in add_dict:
             if key in counts_dict:
                 counts_dict[key] = [counts_dict[key][i] + add_dict[key][i] for i in range(9)]
