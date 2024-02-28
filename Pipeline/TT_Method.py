@@ -1,4 +1,4 @@
-'''Scrip for running the TT method without an outgroup. 
+'''Scrip for running the TT method. 
 The user can tweak parameters defined at the start if they so wish.
 Functions used are found in the functions.py script.
 Please see the Manual (ReadMe.md) or use the command 'TT_Method.py --help' for help.
@@ -80,6 +80,3 @@ if file_type == 'vcf':
             else: counts_dict.update({key: add_dict[key]})
 
 print(counts_dict)
-
-# When we move on to doing calculations, unless we want to print them also
-       

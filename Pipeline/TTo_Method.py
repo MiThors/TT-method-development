@@ -65,7 +65,7 @@ if any(len(lst) != file_tot for lst in [files_pop2, files_outgroup, files_anc]):
     print("Error: Unequal amount of files for pop1, pop2 or ancestral.")
     print(f'Files given for pop1 are: {files_pop1}')
     print(f'Files given for pop2 are: {files_pop2}')
-    print(f'Files given for pop2 are: {files_outgroup}')
+    print(f'Files given for outgroup are: {files_outgroup}')
     print(f'Files given for ancestral states are: {files_anc}')
     exit(1)
 
