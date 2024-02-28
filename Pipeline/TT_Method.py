@@ -42,7 +42,7 @@ parser.add_argument("-k", "--keywords",
                     help = "names of 2 populations, MUST be same order as -1 and -2 flag")
 parser.add_argument("-o", "--out", 
                     default = "TT_out_pop1_pop2",
-                    help = "optional flag to indicate that all chromosomes are in the same file")
+                    help = "name of the output directory")
 parser.add_argument("--test", action = "store_true")
 args = parser.parse_args()
 
