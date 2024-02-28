@@ -6,6 +6,9 @@ import gzip
 
 
 def get_indexes(columns_list):
+    '''Function to get the indexes for the relevant columns in a vcf file. This avoids magic numbers and makes code easier to understand, and additionally helps to catch formatting issues. 
+    In: the header line of a vcf, split on whitespace into a list
+    Out: all 7 indexes as ints'''
     chrom_ind = columns_list.index("#CHROM")
     pos_ind = columns_list.index("POS")
     ref_ind = columns_list.index("REF")
@@ -28,13 +31,14 @@ def bad_coverage(depth, low, high):
     else: return True
 
 
-def not_found_in_outgroup(outgroup_genotype, ref, alt, nucl_A):
+def derived_not_in_outgroup(outgroup_genotype, ref, alt, nucl_A):
+    '''Function to check if the derived allele '''
     if alt == '.' and ref == nucl_A: derived = 0
     elif alt == '.' and ref != nucl_A: derived = 2
     elif ref == nucl_A: derived = outgroup_genotype.count("1")
     else: derived = outgroup_genotype.count("0")
-    if derived > 0 : return True
-    else: return False
+    if derived > 0 : return False
+    else: return True
 
 
 def get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2):
@@ -279,7 +283,7 @@ def get_counts_vcf_TTo(pop1, pop2, outgroup, anc, low_cov, high_cov, filters):
                         if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) or bad_coverage(coverage_OG, low_cov, high_cov): continue # Check the coverage is within acceptable thresholds
                         elif '.' in [genotype_1, genotype_2, genotype_OG] : continue # Check if genotypes are undefined
                         elif "2" in [genotype_1, genotype_2, genotype_OG] : continue # Check for multiallelic
-                        elif not_found_in_outgroup(genotype_OG, ref_OG, alt_OG, nucl_A): continue
+                        elif derived_not_in_outgroup(genotype_OG, ref_OG, alt_OG, nucl_A): continue
                         # Check if current chromosome exists in the dict already, if not add another key for that
                         if chrom_1 not in out_dict: out_dict.update({chrom_1 : [0, 0, 0, 0, 0, 0, 0, 0, 0]})
                         # Get the type of sample configuration, represented as the index of m0, m1, ... m8
