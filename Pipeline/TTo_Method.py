@@ -41,11 +41,11 @@ parser.add_argument("-a", "--ancestral",
                     nargs = '+',
                     help = "files containing ancestral states")
 parser.add_argument("-k", "--keywords",  
-                    nargs = 2, 
-                    default = ["pop1", "pop2"],
-                    help = "names of 2 populations, MUST be same order as -1 and -2 flag")
+                    nargs = 3, 
+                    default = ["pop1", "pop2", "outgroup"],
+                    help = "names of 2 populations, MUST be same order as -1 and -2 flag then the outgroup")
 parser.add_argument("-o", "--out", 
-                    default = "TT_out_pop1_pop2",
+                    default = "TTo_out_pop1_pop2",
                     help = "name of the output directory")
 parser.add_argument("--test", action = "store_true")
 args = parser.parse_args()
