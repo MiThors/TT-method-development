@@ -65,13 +65,19 @@ def get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1,
         exit(1)
         
 
-def get_counts_vcf_TT(pop1, pop2, anc, low_cov, high_cov, filters):
+def get_counts_vcf_TT(iterable):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
     pop1, pop2, anc = filepaths for all files, list of one or more
     only_one_file = true or false if all chromosomes are in one file
     low_cov, high_cov = coverage thresholds for filtering, set up in main method file
     filters = list of values considered acceptable for FILTER field of vcf file
     Returns all eight count scenarios in a dictionary, keys are chromosomes, one list of counts per chromosome'''
+    pop1 = iterable[0]
+    pop2 = iterable[1]
+    anc = iterable[2]
+    low_cov = iterable[3]
+    high_cov = iterable[4]
+    filters = iterable[5]
     # Variable initialisation
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
@@ -99,7 +105,6 @@ def get_counts_vcf_TT(pop1, pop2, anc, low_cov, high_cov, filters):
                     chrom_2_ind, pos_2_ind, ref_2_ind, alt_2_ind, qual_2_ind, filter_2_ind, format_2_ind = get_indexes(pop2_columns)
                     pos_A_ind = anc_columns.index("POS")
                     nucl_A_ind = anc_columns.index("NUCL")
-                    print()
                 except ValueError:
                     print(f"Could not find all columns in in vcf files {pop1} or {pop2}, or all columns in ancestral file. Please check that formatting is correct.")
                     exit(1)
@@ -170,7 +175,7 @@ def get_counts_vcf_TT(pop1, pop2, anc, low_cov, high_cov, filters):
     if out_dict:
         return out_dict
     else:
-        print("Error: It seems that every position in files {pop1} and {pop2} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
+        print(f"Error: It seems that every position in files {pop1} and {pop2} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         exit(1)
 
 
@@ -214,7 +219,6 @@ def get_counts_vcf_TTo(pop1, pop2, outgroup, anc, low_cov, high_cov, filters):
                         chrom_OG_ind, pos_OG_ind, ref_OG_ind, alt_OG_ind, qual_OG_ind, filter_OG_ind, format_OG_ind = get_indexes(outgroup_columns)
                         pos_A_ind = anc_columns.index("POS")
                         nucl_A_ind = anc_columns.index("NUCL")
-                        print()
                     except ValueError:
                         print(f"Could not find all columns in in one or multiple vcf files {pop1}, {pop2} or {file_og}, or all columns in ancestral file. Please check that formatting is correct.")
                         exit(1)

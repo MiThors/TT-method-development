@@ -9,6 +9,8 @@ Milo Thordarson: anth2886@student.uu.se'''
 import functions
 import argparse
 import os
+import time
+import multiprocessing
 
 # Filtering parameters that can be changed by the user
 # These represent what you consider low and high coverage for a genotype position, as an int
@@ -71,12 +73,42 @@ counts_dict = {}
 
 # For vcf filetype
 if file_type == 'vcf': 
+    t0 = time.time()
+    iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters] for i in range(file_tot)]
+    if __name__ == '__main__':
+        with multiprocessing.Pool() as pool:
+            results = pool.map(functions.get_counts_vcf_TT, iterables)
+    
+    for dict in results:
+        for key in dict:
+            if key in counts_dict:
+                counts_dict[key] = [counts_dict[key][i] + dict[key][i] for i in range(9)]
+            else: counts_dict.update({key: dict[key]})
+
+    #for i in range(file_tot):
+    #    # Get the counts for a vcf file from this function, returns a dictionary with {chrom: m0, m1, m2, m3, m4, m5, m6, m7, m8} structure
+    #    add_dict = functions.get_counts_vcf_TT(files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters)
+    #    for key in add_dict:
+    #        if key in counts_dict:
+    #            counts_dict[key] = [counts_dict[key][i] + add_dict[key][i] for i in range(9)]
+    #        else: counts_dict.update({key: add_dict[key]})
+t1 = time.time()
+print(counts_dict)
+print(f'Time elapsed for parallelized = {t1-t0}')
+
+loop_counts = {}
+
+if file_type == 'vcf': 
+    t0 = time.time()
     for i in range(file_tot):
         # Get the counts for a vcf file from this function, returns a dictionary with {chrom: m0, m1, m2, m3, m4, m5, m6, m7, m8} structure
-        add_dict = functions.get_counts_vcf_TT(files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters)
+        add_dict = functions.get_counts_vcf_TT(iterables[i])
         for key in add_dict:
-            if key in counts_dict:
-                counts_dict[key] = [counts_dict[key][i] + add_dict[key][i] for i in range(9)]
-            else: counts_dict.update({key: add_dict[key]})
+            if key in loop_counts:
+                loop_counts[key] = [loop_counts[key][i] + add_dict[key][i] for i in range(9)]
+            else: loop_counts.update({key: add_dict[key]})
 
-print(counts_dict)
+t1 = time.time()
+print()
+print(loop_counts)
+print(f'Time elapsed for looped = {t1-t0}')
