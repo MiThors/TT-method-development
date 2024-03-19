@@ -79,8 +79,7 @@ def get_counts_vcf_TT(iterable):
     low_cov = iterable[3]
     high_cov = iterable[4]
     filters = iterable[5]
-    window_size = iterable[6]
-    print_counts = iterable[7]
+    window_size = int(iterable[6])
     # Variable initialisation
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
@@ -88,9 +87,8 @@ def get_counts_vcf_TT(iterable):
     window_step = 0
     out_dict = {}
     local_count = []
-    if print_counts: 
-        win_pos = {}
-        win_start = 0
+    win_pos = {}
+    win_start = 0
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(pop1, 'rt', encoding='utf-8') as file_1:
@@ -122,8 +120,9 @@ def get_counts_vcf_TT(iterable):
                     l1 = file_1.readline().strip().split()
                     l2 = file_2.readline().strip().split()
                     la = ancestral.readline().strip().split()
-                    if not l1 or not l2 or not la : 
-                        if print_counts: win_pos.update({current_chrom: (win_start, current_pos)})
+                    if not l1 or not l2 or not la: 
+                        if local_count: out_dict[current_chrom].append(local_count)
+                        win_pos[current_chrom].append((win_start, current_pos))
                         break
                     pos_1 = int(l1[pos_1_ind])
                     pos_2 = int(l2[pos_2_ind])
@@ -146,9 +145,23 @@ def get_counts_vcf_TT(iterable):
                         print(f"Error: Files never managed to be reach at the same position, {anc} ended at {pos_A}, {pop1} at {pos_1}, and {pop2} at {pos_2}. Please check that correct files are being compared, or file formatting.")
                         sys.exit(1)
 
+                    # Define variables
+                    nucl_A = la[nucl_A_ind]
+                    ref_1, ref_2 = l1[ref_1_ind], l2[ref_2_ind]
+                    alt_1, alt_2 = l1[alt_1_ind], l2[alt_2_ind]
+                    chrom_1, chrom_2 = l1[chrom_1_ind], l2[chrom_2_ind]
+
                     if chrom_1 != chrom_2: 
                         print(f'Error: Files at same positions, but chromosomes in {pop1} and {pop2} are not the same, please check file formatting.')
                         sys.exit(1)
+
+                    # Check if current chromosome exists in the dict already, if not add another key for that
+                    if chrom_1 not in out_dict: 
+                        out_dict.update({chrom_1 : []})
+                        win_pos.update({chrom_1: []})
+                        if local_count:
+                            out_dict[current_chrom].append(local_count)
+                        local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                     
                     if window_step == 0:
                         win_start = pos_1
@@ -157,24 +170,15 @@ def get_counts_vcf_TT(iterable):
                         out_dict[chrom_1].append(local_count)
                         local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                         window_step = 0
-                        if print_counts: win_pos.update({current_chrom: (win_start, current_pos)})
+                        win_pos[chrom_1].append((win_start, current_pos))
                         win_start = pos_1
 
-                    # Define variables
-                    nucl_A = la[nucl_A_ind]
-                    ref_1, ref_2 = l1[ref_1_ind], l2[ref_2_ind]
-                    alt_1, alt_2 = l1[alt_1_ind], l2[alt_2_ind]
-                    chrom_1, chrom_2 = l1[chrom_1_ind], l2[chrom_2_ind]
-
-                    # Check if current chromosome exists in the dict already, if not add another key for that
-                    if chrom_1 not in out_dict: 
-                        out_dict.update({chrom_1 : []})
-                        if local_count:
-                            out_dict[current_chrom].append(local_count)
-                        local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                    current_chrom = chrom_1
+                    window_step += 1
+                    current_pos = pos_1
                     
                     # Series of quality and assumption checks to make sure that we can keep going 
-                    elif '.' in [l1[qual_1_ind], l2[qual_2_ind]] : continue
+                    if '.' in [l1[qual_1_ind], l2[qual_2_ind]] : continue
                     elif l1[filter_1_ind] not in filters or l2[filter_2_ind] not in filters : continue
                     elif nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
                     elif len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Check for multiallelic site
@@ -200,12 +204,9 @@ def get_counts_vcf_TT(iterable):
                     configuration_index = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
                     # Add one count to the relevant chromosome and configuration count
                     local_count[configuration_index] += 1
-                    current_chrom = chrom_1
-                    window_step += 1
-                    current_pos = pos_1
                     
-    if out_dict:
-        return out_dict
+    if out_dict and win_pos:
+        return out_dict, win_pos
     else:
         print(f"Error: It seems that every position in files {pop1} and {pop2} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
