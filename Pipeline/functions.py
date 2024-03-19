@@ -81,7 +81,11 @@ def get_counts_vcf_TT(iterable):
     # Variable initialisation
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
+    # Standard is 5000000 which corresponds to about 5 cM
+    window_size = 5000000
+    window_step = 0
     out_dict = {}
+    local_count = []
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(pop1, 'rt', encoding='utf-8') as file_1:
@@ -109,7 +113,6 @@ def get_counts_vcf_TT(iterable):
                     print(f"Could not find all columns in in vcf files {pop1} or {pop2}, or all columns in ancestral file. Please check that formatting is correct.")
                     exit(1)
                 
-                # While loop for to align positions if needed
                 while l1 and l2 and la:
                     l1 = file_1.readline().strip().split()
                     l2 = file_2.readline().strip().split()
@@ -167,11 +170,21 @@ def get_counts_vcf_TT(iterable):
                     elif '.' in [genotype_1, genotype_2] : continue # Check if genotypes are undefined
                     elif "2" in [genotype_1, genotype_2] : continue # Check for multiallelic
                     # Check if current chromosome exists in the dict already, if not add another key for that
-                    if chrom_1 not in out_dict: out_dict.update({chrom_1 : [0, 0, 0, 0, 0, 0, 0, 0, 0]})
+                    if chrom_1 not in out_dict: 
+                        out_dict.update({chrom_1 : []})
+                        if local_count:
+                            out_dict[current_chrom].append(local_count)
+                        local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                     # Get the type of sample configuration, represented as the index of m0, m1, ... m8
                     configuration_index = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
                     # Add one count to the relevant chromosome and configuration count
-                    out_dict[chrom_1][configuration_index] += 1
+                    local_count[configuration_index] += 1
+                    current_chrom = chrom_1
+                    window_step += 1
+                    if window_step >= window_size:
+                        out_dict[chrom_1].append(local_count)
+                        local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                    
     if out_dict:
         return out_dict
     else:
@@ -220,10 +233,9 @@ def get_counts_vcf_TTo(pop1, pop2, outgroup, anc, low_cov, high_cov, filters):
                         pos_A_ind = anc_columns.index("POS")
                         nucl_A_ind = anc_columns.index("NUCL")
                     except ValueError:
-                        print(f"Could not find all columns in in one or multiple vcf files {pop1}, {pop2} or {file_og}, or all columns in ancestral file. Please check that formatting is correct.")
+                        print(f"Error: Could not find all columns in in one or multiple vcf files {pop1}, {pop2} or {file_og}, or all columns in ancestral file. Please check that formatting is correct.")
                         exit(1)
 
-                    # While loop for to align positions if needed
                     while l1 and l2 and la:
                         l1 = file_1.readline().strip().split()
                         l2 = file_2.readline().strip().split()

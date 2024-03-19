@@ -73,15 +73,19 @@ counts_dict = {}
 
 # For vcf filetype
 if file_type == 'vcf': 
+    # Create iterable list with all input parameters for counting
     iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters] for i in range(file_tot)]
+    # To avoid infinite recursion
     if __name__ == '__main__':
         with multiprocessing.Pool() as pool:
+            # Computes for files in parallel using CPU cores available to user
             results = pool.map(functions.get_counts_vcf_TT, iterables)
     
+    # Combining all counts into total counts
     for dict in results:
-        for key in dict:
-            if key in counts_dict:
-                counts_dict[key] = [counts_dict[key][i] + dict[key][i] for i in range(9)]
-            else: counts_dict.update({key: dict[key]})
-
+        for chrom in dict:
+            if not chrom in counts_dict:
+                counts_dict.update({chrom: [0, 0, 0, 0, 0, 0, 0, 0, 0]})
+            for window in dict[chrom]:
+                counts_dict[chrom] = [counts_dict[chrom][i] + window[i] for i in range(9)]
 print(counts_dict)
