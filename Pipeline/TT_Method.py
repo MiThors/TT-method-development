@@ -9,7 +9,6 @@ Milo Thordarson: anth2886@student.uu.se'''
 import functions
 import argparse
 import os
-import time
 import multiprocessing
 import sys
 
