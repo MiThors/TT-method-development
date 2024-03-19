@@ -48,7 +48,7 @@ parser.add_argument("-o", "--out",
                     help = "name of the output directory")
 parser.add_argument("--test", action = "store_true")
 parser.add_argument("-c", "--counts", 
-                    action = "store_true",
+                    action="store_true",
                     help = "output a file with all counts per chromosome per window")
 parser.add_argument("-w", "--window", 
                     default = "5000000",
@@ -60,7 +60,8 @@ files_pop1 = args.pop1
 files_pop2 = args.pop2
 file_type = args.type
 files_anc = args.ancestral
-pop1_key, pop2_key = args.keywords
+pop1_key = args.keywords[0]
+pop2_key = args.keywords[1]
 out_dir = args.out
 print_counts = args.counts
 win_size = args.window
@@ -89,18 +90,22 @@ if file_type == 'vcf':
         with multiprocessing.Pool() as pool:
             # Computes for files in parallel using CPU cores available to user
             results = pool.map(functions.get_counts_vcf_TT, iterables)
-            for comparison in results:
-                counts = comparison[0]
-                windows = comparison[1]
-
     
-    # Combining all counts into total counts
-    #for dict in results:
-    #    for chrom in dict:
-    #        if not chrom in counts_dict:
-    #            counts_dict.update({chrom: [0, 0, 0, 0, 0, 0, 0, 0, 0]})
-    #        for window in dict[chrom]:
-    #            counts_dict[chrom] = [counts_dict[chrom][i] + window[i] for i in range(9)]
+counts = {}
+windows = {}
 
-print(counts)
-print(windows)
+for comparison in results:
+    for key in comparison[0]:
+        if not key in counts:
+            counts.update({key: []})
+            windows.update({key: []})
+    counts[key].extend(comparison[0][key])
+    windows[key].extend(comparison[1][key])
+
+if print_counts:
+    with open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w') as count_file:
+        for key in counts:
+            count_file.write("#" + key + "\n")
+            for i in range(len(counts[key])):
+                count_file.write(str(windows[key][i]) + "\t" + str(counts[key][i]) + "\n")
+
