@@ -83,7 +83,6 @@ def get_counts_vcf_TT(iterable):
     # Variable initialisation
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
-    # Standard is 5000000 which corresponds to about 5 cM
     window_step = 0
     out_dict = {}
     local_count = []
@@ -113,7 +112,7 @@ def get_counts_vcf_TT(iterable):
                     pos_A_ind = anc_columns.index("POS")
                     nucl_A_ind = anc_columns.index("NUCL")
                 except ValueError:
-                    print(f"Could not find all columns in in vcf files {pop1} or {pop2}, or all columns in ancestral file. Please check that formatting is correct.")
+                    print(f"Error: Could not find all columns in in vcf files {pop1} or {pop2}, or all columns in ancestral file. Please check that formatting is correct.")
                     sys.exit(1)
                 
                 while l1 and l2 and la:
@@ -212,7 +211,7 @@ def get_counts_vcf_TT(iterable):
         sys.exit(1)
 
 
-def get_counts_vcf_TTo(pop1, pop2, outgroup, anc, low_cov, high_cov, filters):
+def get_counts_vcf_TTo(iterable):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
     pop1, pop2, anc = filepaths for all files, list of one or more
     only_one_file = true or false if all chromosomes are in one file
@@ -220,9 +219,21 @@ def get_counts_vcf_TTo(pop1, pop2, outgroup, anc, low_cov, high_cov, filters):
     filters = list of values considered acceptable for FILTER field of vcf file
     Returns all eight count scenarios in a dictionary, keys are chromosomes, one list of counts per chromosome'''
     # Variable initialisation
+    pop1 = iterable[0]
+    pop2 = iterable[1]
+    outgroup = iterable[2]
+    anc = iterable[3]
+    low_cov = iterable[4]
+    high_cov = iterable[5]
+    filters = iterable[6]
+    window_size = int(iterable[7])
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
+    window_step = 0
     out_dict = {}
+    local_count = []
+    win_pos = {}
+    win_start = {}
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(pop1, 'rt', encoding='utf-8') as file_1:
@@ -261,7 +272,11 @@ def get_counts_vcf_TTo(pop1, pop2, outgroup, anc, low_cov, high_cov, filters):
                         l2 = file_2.readline().strip().split()
                         lo = file_og.readline()
                         la = ancestral.readline().strip().split()
-                        if not l1 or not l2 or not la : break
+                        if not l1 or not l2 or not la : 
+                            if local_count:
+                                out_dict[current_chrom].append(local_count)
+                                win_pos[current_chrom].append((win_start, current_pos))
+                            break
                         pos_1 = int(l1[pos_1_ind])
                         pos_2 = int(l2[pos_2_ind])
                         pos_OG = int(lo[pos_OG_ind])
@@ -294,9 +309,34 @@ def get_counts_vcf_TTo(pop1, pop2, outgroup, anc, low_cov, high_cov, filters):
                         alt_1, alt_2, alt_OG = l1[alt_1_ind], l2[alt_2_ind], lo[alt_OG_ind]
                         chrom_1, chrom_2, chrom_OG = l1[chrom_1_ind], l2[chrom_2_ind], lo[chrom_OG_ind]
 
+                        if not chrom_1 == chrom_2 == chrom_OG:
+                            print(f'Error: Files at same positions, but chromosomes in {pop1}, {pop2} and {file_og} are not the same, please check file formatting.')
+                            sys.exit(1)
+                        
+                        # Check if current chromosome exists in the dict already, if not add another key for that
+                        if chrom_1 not in out_dict: 
+                            out_dict.update({chrom_1 : []})
+                            win_pos.update({chrom_1: []})
+                        if local_count:
+                            out_dict[current_chrom].append(local_count)
+                        local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                    
+                        if window_step == 0:
+                            win_start = pos_1
+
+                        if window_step >= window_size:
+                            out_dict[chrom_1].append(local_count)
+                            local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                            window_step = 0
+                            win_pos[chrom_1].append((win_start, current_pos))
+                            win_start = pos_1
+
+                        current_chrom = chrom_1
+                        window_step += 1
+                        current_pos = pos_1
+
                         # Series of quality and assumption checks to make sure that we can keep going
-                        if not chrom_1 == chrom_2 == chrom_OG: continue 
-                        elif '.' in [l1[qual_1_ind], l2[qual_2_ind], l2[qual_OG_ind]] : continue
+                        if '.' in [l1[qual_1_ind], l2[qual_2_ind], l2[qual_OG_ind]] : continue
                         elif l1[filter_1_ind] not in filters or l2[filter_2_ind] not in filters or lo[filter_OG_ind] not in filters : continue
                         elif nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
                         elif len(set([nucl_A,ref_1,ref_2,ref_OG,alt_1,alt_2,alt_OG]).difference('.')) > 2: continue # Check for multiallelic sites
@@ -320,14 +360,12 @@ def get_counts_vcf_TTo(pop1, pop2, outgroup, anc, low_cov, high_cov, filters):
                         elif '.' in [genotype_1, genotype_2, genotype_OG] : continue # Check if genotypes are undefined
                         elif "2" in [genotype_1, genotype_2, genotype_OG] : continue # Check for multiallelic
                         elif derived_not_in_outgroup(genotype_OG, ref_OG, alt_OG, nucl_A): continue
-                        # Check if current chromosome exists in the dict already, if not add another key for that
-                        if chrom_1 not in out_dict: out_dict.update({chrom_1 : [0, 0, 0, 0, 0, 0, 0, 0, 0]})
                         # Get the type of sample configuration, represented as the index of m0, m1, ... m8
                         configuration_index = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
                         # Add one count to the relevant chromosome and configuration count
                         out_dict[chrom_1][configuration_index] += 1
-    if out_dict:
-        return out_dict
+    if out_dict and win_pos:
+        return out_dict, win_pos
     else:
         print(f"Error: It seems that every position in files {pop1}, {pop2} and {outgroup} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
