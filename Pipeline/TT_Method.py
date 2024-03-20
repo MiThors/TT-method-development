@@ -90,21 +90,23 @@ if file_type == 'vcf':
             # Computes for files in parallel using CPU cores available to user
             results = pool.map(functions.get_counts_vcf_TT, iterables)
     
-counts = {}
+counts = []
 windows = {}
 
-for comparison in results:
-    for key in comparison[0]:
-        if not key in counts:
-            counts.update({key: []})
-            windows.update({key: []})
-    counts[key].extend(comparison[0][key])
-    windows[key].extend(comparison[1][key])
-
 if print_counts:
-    with open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w') as count_file:
-        for key in counts:
-            count_file.write("#" + key + "\n")
-            for i in range(len(counts[key])):
-                count_file.write(str(windows[key][i]) + "\t" + str(counts[key][i]) + "\n")
+    count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
 
+for comparison in results:
+    for key in comparison[1]:
+        if not key in windows:
+            windows.update({key: []})
+    counts.extend(comparison[0][key])
+    windows[key].extend(comparison[1][key])
+    if print_counts:
+        count_file.write("#" + key + "\n")
+        for i in range(len(windows[key])):
+                count_file.write(str(windows[key][i]) + "\t" + str(counts[i]) + "\n")
+
+print(counts)
+
+#estimates = functions.get_estimates_vcf(counts)

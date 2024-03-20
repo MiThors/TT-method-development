@@ -369,3 +369,8 @@ def get_counts_vcf_TTo(iterable):
     else:
         print(f"Error: It seems that every position in files {pop1}, {pop2} and {outgroup} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
+
+
+def get_estimates_vcf(count_list):
+    obs_d = [0 for i in range(9)]
+    return
