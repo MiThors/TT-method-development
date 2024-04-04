@@ -90,29 +90,48 @@ counts_dict = {}
 # For vcf filetype
 if file_type == 'vcf': 
     # Create iterable list with all input parameters for counting
-    iterables = [[files_pop1[i], files_pop2[i], files_outgroup[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
+    iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
+    iterables_outgroup = [[files_pop1[i], files_pop2[i], files_outgroup[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
 
 # To avoid infinite recursion
     if __name__ == '__main__':
         with multiprocessing.Pool() as pool:
             # Computes for files in parallel using CPU cores available to user
-            results = pool.map(functions.get_counts_vcf_TTo, iterables)
+            results = pool.map(functions.get_counts_vcf_TT, iterables)
+            results_outgroup = pool.map(functions.get_counts_vcf_TTo, iterables_outgroup)
     
-counts = {}
+counts = []
 windows = {}
-
-for comparison in results:
-    for key in comparison[0]:
-        if not key in counts:
-            counts.update({key: []})
-            windows.update({key: []})
-    counts[key].extend(comparison[0][key])
-    windows[key].extend(comparison[1][key])
+counts_outgroup = []
+windows_outgroup = {}
 
 if print_counts:
-    with open(out_dir + "/" + pop1_key + pop2_key + "_TTo_Counts.txt", 'w') as count_file:
-        for key in counts:
-            count_file.write("#" + key + "\n")
-            for i in range(len(counts[key])):
-                count_file.write(str(windows[key][i]) + "\t" + str(counts[key][i]) + "\n")
+    count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
+    count_file_outgroup = open(out_dir + "/" + pop1_key + pop2_key + "_TTo_Counts.txt", 'w')
+
+for comparison in results:
+    for key in comparison[1]:
+        if not key in windows:
+            windows.update({key: []})
+    counts.extend(comparison[0][key])
+    windows[key].extend(comparison[1][key])
+    if print_counts:
+        count_file.write("#" + key + "\n")
+        for i in range(len(windows[key])):
+                count_file.write(str(windows[key][i]) + "\t" + str(counts[i]) + "\n")
+
+for comparison in results_outgroup:
+    for key in comparison[1]:
+        if not key in windows_outgroup:
+            windows_outgroup.update({key: []})
+    counts_outgroup.extend(comparison[0][key])
+    windows_outgroup[key].extend(comparison[1][key])
+    if print_counts:
+        count_file_outgroup.write("#" + key + "\n")
+        for i in range(len(windows_outgroup[key])):
+                count_file_outgroup.write(str(windows_outgroup[key][i]) + "\t" + str(counts_outgroup[i]) + "\n")
+
+if print_counts: 
+    count_file.close()
+    count_file_outgroup.close()
 

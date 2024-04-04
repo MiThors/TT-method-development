@@ -4,6 +4,8 @@ Milo Thordarson: anth2886@student.uu.se'''
 
 import gzip
 import sys
+from math import log
+import traceback
 
 
 def get_indexes(columns_list):
@@ -370,7 +372,93 @@ def get_counts_vcf_TTo(iterable):
         print(f"Error: It seems that every position in files {pop1}, {pop2} and {outgroup} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
 
+def estimate_param(counts):
+    n0 = counts[0] + counts[8]
+    n1, n2, n3, n4, n5, n6, n7 = counts[1:8]
+    n_tot=1.0*sum(counts)
+    alfa1=2.0*n5/(n5+2.0*n6)
+    alfa2=2.0*n5/(n5+2.0*n7)
 
-def get_estimates_vcf(count_list):
+    mu_t1_t2_diff=1.0*(n3-n4+0.5*(n1+n6-n2-n7))/n_tot
+
+    thetaA=(3.0/n_tot)*(n5+2.0*n6)*(n5+2.0*n7)/(8.0*n5)
+
+    mu_t1_p1=1.0*n3+0.5*n1
+    mu_t1_p2=(n5+2.0*n6)*(n5+6.0*n7)/(8.0*n5)
+    mu_t1=(mu_t1_p1-mu_t1_p2)/n_tot 
+    mu_t2_p1=1.0*n4+0.5*n2
+    mu_t2_p2=(n5+6.0*n6)*(n5+2.0*n7)/(8.0*n5)
+    mu_t2=(mu_t2_p1-mu_t2_p2)/n_tot 
+    if n5<2*n6:
+        drift1=-1.0*log(alfa1)
+        theta1=mu_t1/drift1
+        the_nom=2.0*n6*(n1+n7)-1.0*n5*(n1+4.0*n3-n7)
+        the_den=2.0*(2.0*n6-1.0*n5)*n_tot
+        mu_nu1=the_nom/the_den
+        the_nom=(2.0*n6+n5)*(n5*(8.0*n3+2.0*n7+n5)-2.0*n6*(6.0*n7+n5))
+        the_den=(2.0*n6-n5)*(n5*(4.0*n1+8.0*n3-6.0*n7-n5)-2.0*n6*(6.0*n7+n5))
+        W1ratio=the_nom/the_den
+        logpt=1.0/(log(2.0*n5)-log(2.0*n6+n5))
+        pt1=(2.0*n7+n1)*(2.0*n6+n5)/(2.0*n6-n5)
+        pt2=(2.0*n3-n1)/logpt
+        pt3=(2.0*n6+n5)*(6.0*n7+n5)/(4.0*n5)
+        pt4=4.0*n5/(2.0*n6-n5)
+        D1=(pt1+pt2-(pt3*(pt4+logpt)))/(2.0*n_tot)  
+    else:
+        drift1='NaN'
+        theta1='NaN'
+        mu_nu1='NaN'
+        W1ratio='NaN'
+        D1='NaN'    
+    if n5<2*n7:
+        drift2=-1.0*log(alfa2)
+        theta2=mu_t2/drift2
+        the_nom=2.0*n7*(n2+n6)-1.0*n5*(n2+4.0*n4-n6)
+        the_den=2.0*(2.0*n7-1.0*n5)*n_tot
+        mu_nu2=the_nom/the_den  
+        the_nom=(2.0*n7+n5)*(n5*(8.0*n4+2.0*n6+n5)-2.0*n7*(6.0*n6+n5))
+        the_den=(2.0*n7-n5)*(n5*(4.0*n2+8.0*n4-6.0*n6-n5)-2.0*n7*(6.0*n6+n5))
+        W2ratio=the_nom/the_den 
+        logpt=1.0/(log(2.0*n5)-log(2.0*n7+n5))
+        pt1=(2.0*n6+n2)*(2.0*n7+n5)/(2.0*n7-n5)
+        pt2=(2.0*n4-n2)/logpt
+        pt3=(6.0*n6+n5)*(2.0*n7+n5)/(4.0*n5)
+        pt4=4.0*n5/(2.0*n7-n5)
+        D2=(pt1+pt2-(pt3*(pt4+logpt)))/(2.0*n_tot)  
+    else:
+        drift2='NaN'
+        theta2='NaN'
+        mu_nu2='NaN'
+        W2ratio='NaN'
+        D2='NaN'
+#################METHOD Schlebusch et al 2012 ############
+    Ccount1=1.0*n3+0.5*n6
+    D1orD2count1=0.5*n5+1.0*n7
+    Ccount2=1.0*n4+0.5*n7
+    D1orD2count2=0.5*n5+1.0*n6
+    P1=-log((3.0/2.0)*D1orD2count1/(D1orD2count1+Ccount1))
+    P2=-log((3.0/2.0)*D1orD2count2/(D1orD2count2+Ccount2))
+    P1_time=P1*thetaA
+    P2_time=P2*thetaA
+##################METHOD Schlebusch et al 2012 ############
+##################Fst############
+    Fst=(2.0*n3+2.0*n4-1.0*n5)/(1.0*n1+1.0*n2+2.0*n3+2.0*n4+1.0*n5+1.0*n6+1.0*n7)
+##################Fst############
+    return [alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_t1_t2_diff,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst]
+
+def get_estimates_vcf_TT(count_list):
     obs_d = [0 for i in range(9)]
-    return
+    for x in count_list:
+        if sum(x) == 0: continue
+        obs_d = [obs_d[i] + x[i] for i in range(9)]
+    try:
+        [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]=estimate_param(obs_d)
+    except ZeroDivisionError as zeros:
+        traceback.print_exc()
+        print()
+        print("Help: This error occurs when one of the situations in the offending line of code is 0. If counts are all 0, check file formatting, the script can't read your genomes. If only some cases are 0, make sure the windows are wide enough or reconsider the comparison between the populations.")
+        sys.exit(1)
+    l_alfa1, l_alfa2, l_thetaA, l_mu_t1, l_mu_t2, l_mu_nu1, l_mu_nu2, l_mu_diff_t1_t2, l_drift1, l_drift2, l_theta1, l_theta2, l_W1ratio, l_W2ratio, l_D1, l_D2, l_P1, l_P2, l_P1_time, l_P2_time, l_Fst, num_sites=[]
+    g=0
+    n=0
+    return [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]

@@ -107,6 +107,8 @@ for comparison in results:
         for i in range(len(windows[key])):
                 count_file.write(str(windows[key][i]) + "\t" + str(counts[i]) + "\n")
 
-print(counts)
+if print_counts: count_file.close()
 
-#estimates = functions.get_estimates_vcf(counts)
+estimates = functions.get_estimates_vcf_TT(counts)
+
+print(estimates)
