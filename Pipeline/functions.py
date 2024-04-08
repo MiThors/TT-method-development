@@ -451,7 +451,8 @@ def get_estimates_vcf_TT(count_list):
     g=0
     n=0
     obs_d = [0 for i in range(9)]
-    obs_d = [sum(x) for x in zip(*count_list)]
+    # Using list comprehension and zipping, we can sum a list of lists faster than a loop
+    obs_d = [sum(count_window) for count_window in zip(*count_list)]
     try:
         [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]=estimate_param(obs_d)
     except ZeroDivisionError as zeros:
@@ -460,6 +461,9 @@ def get_estimates_vcf_TT(count_list):
         print("Help: This error occurs when one of the situations in the offending line of code is 0. If counts are all 0, check file formatting, the script can't read your genomes. If only some cases are 0, make sure the windows are wide enough or reconsider the comparison between the populations.")
         sys.exit(1)
 
-    
-    
+    for count_window in count_list:
+        if sum(count_window)>0:
+            g+=1
+            n+=sum(count_window)
+
     return [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]
