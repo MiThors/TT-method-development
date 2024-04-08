@@ -447,10 +447,11 @@ def estimate_param(counts):
     return [alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_t1_t2_diff,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst]
 
 def get_estimates_vcf_TT(count_list):
+    l_alfa1 = l_alfa2 = l_thetaA = l_mu_t1 = l_mu_t2 = l_mu_nu1 = l_mu_nu2 = l_mu_diff_t1_t2 = l_drift1 = l_drift2 = l_theta1 = l_theta2 = l_W1ratio = l_W2ratio = l_D1 = l_D2 = l_P1 = l_P2 = l_P1_time = l_P2_time = l_Fst = num_sites = []
+    g=0
+    n=0
     obs_d = [0 for i in range(9)]
-    for x in count_list:
-        if sum(x) == 0: continue
-        obs_d = [obs_d[i] + x[i] for i in range(9)]
+    obs_d = [sum(x) for x in zip(*count_list)]
     try:
         [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]=estimate_param(obs_d)
     except ZeroDivisionError as zeros:
@@ -458,7 +459,7 @@ def get_estimates_vcf_TT(count_list):
         print()
         print("Help: This error occurs when one of the situations in the offending line of code is 0. If counts are all 0, check file formatting, the script can't read your genomes. If only some cases are 0, make sure the windows are wide enough or reconsider the comparison between the populations.")
         sys.exit(1)
-    l_alfa1, l_alfa2, l_thetaA, l_mu_t1, l_mu_t2, l_mu_nu1, l_mu_nu2, l_mu_diff_t1_t2, l_drift1, l_drift2, l_theta1, l_theta2, l_W1ratio, l_W2ratio, l_D1, l_D2, l_P1, l_P2, l_P1_time, l_P2_time, l_Fst, num_sites=[]
-    g=0
-    n=0
+
+    
+    
     return [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]
