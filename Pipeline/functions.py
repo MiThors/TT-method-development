@@ -6,6 +6,7 @@ import gzip
 import sys
 from math import log
 import traceback
+import wbj
 
 
 def get_indexes(columns_list):
@@ -373,6 +374,7 @@ def get_counts_vcf_TTo(iterable):
         sys.exit(1)
 
 def estimate_param(counts):
+    print(f'Counts being printed: {counts}')
     n0 = counts[0] + counts[8]
     n1, n2, n3, n4, n5, n6, n7 = counts[1:8]
     n_tot=1.0*sum(counts)
@@ -453,17 +455,94 @@ def get_estimates_vcf_TT(count_list):
     obs_d = [0 for i in range(9)]
     # Using list comprehension and zipping, we can sum a list of lists faster than a loop
     obs_d = [sum(count_window) for count_window in zip(*count_list)]
+    if obs_d[0] == 0: obs_d[0] = 3
+    if obs_d[1] == 0: obs_d[1] = 3
+    if obs_d[2] == 0: obs_d[2] = 3
+    if obs_d[3] == 0: obs_d[3] = 3
+    if obs_d[4] == 0: obs_d[4] = 3
+    if obs_d[5] == 0: obs_d[5] = 3
+    if obs_d[6] == 0: obs_d[6] = 3
+    if obs_d[7] == 0: obs_d[7] = 3
+    if obs_d[8] == 0: obs_d[8] = 3
     try:
         [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]=estimate_param(obs_d)
     except ZeroDivisionError as zeros:
         traceback.print_exc()
         print()
-        print("Help: This error occurs when one of the situations in the offending line of code is 0. If counts are all 0, check file formatting, the script can't read your genomes. If only some cases are 0, make sure the windows are wide enough or reconsider the comparison between the populations.")
+        print("Help: This error occurs when one of the genotype situation counts in the offending line of code is 0. If counts are all 0, check file formatting, the script can't read your genomes. If only some cases are 0, make sure the windows are wide enough or reconsider the comparison between the populations.")
         sys.exit(1)
 
     for count_window in count_list:
         if sum(count_window)>0:
+            if count_window[0] == 0: count_window[0] = 1
+            if count_window[1] == 0: count_window[1] = 1
+            if count_window[2] == 0: count_window[2] = 1
+            if count_window[3] == 0: count_window[3] = 1
+            if count_window[4] == 0: count_window[4] = 1
+            if count_window[5] == 0: count_window[5] = 1
+            if count_window[6] == 0: count_window[6] = 1
+            if count_window[7] == 0: count_window[7] = 1
+            if count_window[8] == 0: count_window[8] = 1
             g+=1
             n+=sum(count_window)
-
-    return [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]
+            local_count=[obs_d[0]-count_window[0],obs_d[1]-count_window[1],obs_d[2]-count_window[2],obs_d[3]-count_window[3],obs_d[4]-count_window[4],obs_d[5]-count_window[5],obs_d[6]-count_window[6],obs_d[7]-count_window[7],obs_d[8]-count_window[8]]
+            if local_count[0] == 0: local_count[0] = 1
+            if local_count[1] == 0: local_count[1] = 1
+            if local_count[2] == 0: local_count[2] = 1
+            if local_count[3] == 0: local_count[3] = 1
+            if local_count[4] == 0: local_count[4] = 1
+            if local_count[5] == 0: local_count[5] = 1
+            if local_count[6] == 0: local_count[6] = 1
+            if local_count[7] == 0: local_count[7] = 1
+            if local_count[8] == 0: local_count[8] = 1
+            try:
+                [alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_diff_t1_t2,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst]=estimate_param(local_count)
+            except ZeroDivisionError as zeros:
+                traceback.print_exc()
+                print()
+                print("Help: This error occurs when one of the genotype situation counts in the offending line of code is 0. If counts are all 0, check file formatting, the script can't read your genomes. If only some cases are 0, make sure the windows are wide enough or reconsider the comparison between the populations.")
+                sys.exit(1)
+            l_alfa1.append(alfa1)
+            l_alfa2.append(alfa2)
+            l_thetaA.append(thetaA)
+            l_mu_t1.append(mu_t1)
+            l_mu_t2.append(mu_t2)
+            l_mu_nu1.append(mu_nu1)
+            l_mu_nu2.append(mu_nu2)
+            l_mu_diff_t1_t2.append(mu_diff_t1_t2)
+            l_drift1.append(drift1)
+            l_drift2.append(drift2)
+            l_theta1.append(theta1)
+            l_theta2.append(theta2)
+            l_W1ratio.append(W1ratio)
+            l_W2ratio.append(W2ratio)
+            l_D1.append(D1)
+            l_D2.append(D2)
+            l_P1.append(P1)
+            l_P2.append(P2)
+            l_P1_time.append(P1_time)
+            l_P2_time.append(P2_time)
+            l_Fst.append(Fst)
+            num_sites.append(sum(count_window))
+    b_res=[wbj.get_WBJ_mean_var(g,n,obs_alfa1,l_alfa1,num_sites)]
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_alfa2,l_alfa2,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_thetaA,l_thetaA,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_mu_t1,l_mu_t1,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_mu_t2,l_mu_t2,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_mu_nu1,l_mu_nu1,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_mu_nu2,l_mu_nu2,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_mu_diff_t1_t2,l_mu_diff_t1_t2,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_drift1,l_drift1,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_drift2,l_drift2,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_theta1,l_theta1,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_theta2,l_theta2,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_W1ratio,l_W1ratio,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_W2ratio,l_W2ratio,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_D1,l_D1,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_D2,l_D2,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_P1,l_P1,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_P2,l_P2,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_P1_time,l_P1_time,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_P2_time,l_P2_time,num_sites))
+    b_res.append(wbj.get_WBJ_mean_var(g,n,obs_Fst,l_Fst,num_sites))
+    return b_res
