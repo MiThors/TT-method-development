@@ -25,7 +25,7 @@ def get_indexes(columns_list):
 
 def bad_coverage(depth, low, high):
     '''Function to check whether or not the coverage of a position in a genome's vcf is between the set thresholds.
-    Input: the contents of a vcf line as a list, the int index of which column the FORMAT information is stored.
+    Input: the depth of the genotype as a stirng obtained from the vcf, and the low and high thresholds for coverage as ints
     Output: True if the coverage is bad, False if it passed the check.'''
     if depth == '.' : 
         return True # Coverage is bad if undefined
@@ -36,19 +36,32 @@ def bad_coverage(depth, low, high):
 
 
 def derived_not_in_outgroup(outgroup_genotype, ref, alt, nucl_A):
-    '''Function to check if the derived allele '''
+    '''Function to check if a derived allele is found in the outgroup for TTo conditional counting.
+    Input: outgroup genotype as a string, reference nucleotide for outgroup, alternate nucleotide for outgroup and ancestral nucleotide all as strings
+    Output: True if no derived alleles are found in the outgroup, False if there is at least one derived allele'''
+    # No derived
     if alt == '.' and ref == nucl_A: derived = 0
+    # Both derived
     elif alt == '.' and ref != nucl_A: derived = 2
+    # One or more derived, counting alternate nucleotide
     elif ref == nucl_A: derived = outgroup_genotype.count("1")
+    # Reference is the derived nucleotide, one or more derived
     else: derived = outgroup_genotype.count("0")
     if derived > 0 : return False
     else: return True
 
 
 def get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2):
+    '''Function to get what configuration the genotypes of pop1 and pop2 are in, based on the numbers of derived and ancestral alleles. 
+    Input: Ancestral nucleotide, genotypes of both populations, reference and altnerative nucleotides for both populations, all in strings
+    Output: int values corresponding to the configuration'''
+    # No derived
     if alt_1 == '.' and ref_1 == nucl_A: pop1_derived = 0
+    # Both derived
     elif alt_1 == '.' and ref_1 != nucl_A: pop1_derived = 2
+    # One or more derived, counting alternate nucleotide
     elif ref_1 == nucl_A: pop1_derived = genotype_1.count("1")
+    # Reference is the derived nucleotide, one or more derived
     else: pop1_derived = genotype_1.count("0")
     if alt_2 == '.' and ref_2 == nucl_A: pop2_derived = 0
     elif alt_2 == '.' and ref_2 != nucl_A: pop2_derived = 2
@@ -71,11 +84,15 @@ def get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1,
 
 def get_counts_vcf_TT(iterable):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
+    Input:
     pop1, pop2, anc = filepaths for all files, list of one or more
     only_one_file = true or false if all chromosomes are in one file
     low_cov, high_cov = coverage thresholds for filtering, set up in main method file
     filters = list of values considered acceptable for FILTER field of vcf file
-    Returns all eight count scenarios in a dictionary, keys are chromosomes, one list of counts per chromosome'''
+    Output: 
+    out_dict = dictionary, keys are chromosomes, values are list of count lists per window
+    win_pos = dictionary, keys are chromosomes, values are list of tuples containing start and end position of each window'''
+    # Variable initialisation
     pop1 = iterable[0]
     pop2 = iterable[1]
     anc = iterable[2]
@@ -83,7 +100,6 @@ def get_counts_vcf_TT(iterable):
     high_cov = iterable[4]
     filters = iterable[5]
     window_size = int(iterable[6])
-    # Variable initialisation
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
     window_step = 0
@@ -103,7 +119,6 @@ def get_counts_vcf_TT(iterable):
                     l1 = file_1.readline()
                 while l2[0:2] == '##':
                     l2 = file_2.readline()
-                
                 # The line that should be left is the names of all the columns, and so we can get what column the POS, QUAL and FILTER, etc. are at
                 pop1_columns = l1.strip().split()
                 pop2_columns = l2.strip().split()
@@ -117,11 +132,12 @@ def get_counts_vcf_TT(iterable):
                 except ValueError:
                     print(f"Error: Could not find all columns in in vcf files {pop1} or {pop2}, or all columns in ancestral file. Please check that formatting is correct.")
                     sys.exit(1)
-                
+                # Then loop for while file exists to do the counting
                 while l1 and l2 and la:
                     l1 = file_1.readline().strip().split()
                     l2 = file_2.readline().strip().split()
                     la = ancestral.readline().strip().split()
+                    # Case for the end of the file, update dictionaries and break
                     if not l1 or not l2 or not la: 
                         if local_count: out_dict[current_chrom].append(local_count)
                         win_pos[current_chrom].append((win_start, current_pos))
@@ -129,6 +145,7 @@ def get_counts_vcf_TT(iterable):
                     pos_1 = int(l1[pos_1_ind])
                     pos_2 = int(l2[pos_2_ind])
                     pos_A = int(la[pos_A_ind])
+                    # If need to align positions
                     while not pos_1 == pos_2 == pos_A:
                         if pos_1 == min(pos_1, pos_2, pos_A):
                             l1 = file_1.readline().strip().split()
@@ -142,22 +159,19 @@ def get_counts_vcf_TT(iterable):
                             la = ancestral.readline().strip().split()
                             if la: pos_A = int(la[pos_A_ind])
                             else: break
-                    # Check to make sure the positions are all the same. 
+                    # Check to make sure the positions are all the same and throw and error that they never managed to align
                     if not pos_1 == pos_2 == pos_A: 
                         print(f"Error: Files never managed to be reach at the same position, {anc} ended at {pos_A}, {pop1} at {pos_1}, and {pop2} at {pos_2}. Please check that correct files are being compared, or file formatting.")
                         sys.exit(1)
-
-                    # Define variables
                     nucl_A = la[nucl_A_ind]
                     ref_1, ref_2 = l1[ref_1_ind], l2[ref_2_ind]
                     alt_1, alt_2 = l1[alt_1_ind], l2[alt_2_ind]
                     chrom_1, chrom_2 = l1[chrom_1_ind], l2[chrom_2_ind]
-
+                    # Check to make sure the chromosomes are the same
                     if chrom_1 != chrom_2: 
                         print(f'Error: Files at same positions, but chromosomes in {pop1} and {pop2} are not the same, please check file formatting.')
                         sys.exit(1)
-
-                    # Check if current chromosome exists in the dict already, if not add another key for that
+                    # Check if current chromosome exists in the dict already, if not add another key for that and if counting was done on a previous chromosome, update dictionaries
                     if chrom_1 not in out_dict: 
                         out_dict.update({chrom_1 : []})
                         win_pos.update({chrom_1: []})
@@ -166,29 +180,26 @@ def get_counts_vcf_TT(iterable):
                             win_pos[current_chrom].append((win_start, current_pos))
                         local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                         window_step = 0
-                        win_start = pos_1
-                    
+                    # If at the start of a new window, note the starting position
                     if window_step == 0:
                         win_start = pos_1
-
+                    # If at the end of a window, update output directories and start a new window
                     if window_step >= window_size:
                         out_dict[chrom_1].append(local_count)
                         local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                         window_step = 0
                         win_pos[chrom_1].append((win_start, current_pos))
                         win_start = pos_1
-
+                    # To keep track of the previous chromosome and position for updating the directories correctly
                     current_chrom = chrom_1
                     window_step += 1
                     current_pos = pos_1
-                    
                     # Series of quality and assumption checks to make sure that we can keep going 
                     if '.' in [l1[qual_1_ind], l2[qual_2_ind]] : continue
                     elif l1[filter_1_ind] not in filters or l2[filter_2_ind] not in filters : continue
                     elif nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
                     elif len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Check for multiallelic site
                     elif not set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set): continue # All nucleotides should be A, T, C or G.
-                    
                     # If it passes these checks, we get the genotype and coverage and check if they are also appropriate
                     l1_format_info = l1[format_1_ind].split(':')
                     l2_format_info = l2[format_2_ind].split(':')
@@ -197,25 +208,25 @@ def get_counts_vcf_TT(iterable):
                         coverage_1_ind, coverage_2_ind = l1_format_info.index("DP"), l2_format_info.index("DP")
                     except ValueError:
                         continue
-                    
+                    # Get genotype and coverage information
                     l1_genotype_info, l2_genotype_info,  = l1[format_1_ind + 1].split(':'), l2[format_2_ind + 1].split(':')
                     coverage_1, coverage_2 = l1_genotype_info[coverage_1_ind], l2_genotype_info[coverage_2_ind]
                     genotype_1, genotype_2 = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind]
-                    
+                    # Further checks
                     if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
                     elif '.' in [genotype_1, genotype_2] : continue # Check if genotypes are undefined
                     elif "2" in [genotype_1, genotype_2] : continue # Check for multiallelic
+                    # At this stage, all checks passed, and site will be counted
                     # Get the type of sample configuration, represented as the index of m0, m1, ... m8
                     configuration_index = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
                     # Add one count to the relevant chromosome and configuration count
                     local_count[configuration_index] += 1
-                    
+    # Check if the output exists, and if so return it, else there has been an error       
     if out_dict and win_pos:
         return out_dict, win_pos
     else:
         print(f"Error: It seems that every position in files {pop1} and {pop2} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
-
 
 def get_counts_vcf_TTo(iterable):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
@@ -380,7 +391,10 @@ def get_counts_vcf_TTo(iterable):
         sys.exit(1)
 
 def estimate_param(counts):
-    n0 = counts[0] + counts[8]
+    '''Function for estimating the parameters of the model for TT counts. Methods and math are not mine (Milo), see the original TT paper for more information (on the github page).
+    Input: list of counts for each of the eight scenarios for either the entire genome (observed) or just one window (local)
+    Output: list of all the different parameters'''
+    # The first and last cases are not used except in the totals, therefore only the other 7 need to be initialised
     n1, n2, n3, n4, n5, n6, n7 = counts[1:8]
     n_tot=1.0*sum(counts)
     alfa1=2.0*n5/(n5+2.0*n6)
@@ -438,7 +452,7 @@ def estimate_param(counts):
         mu_nu2='NaN'
         W2ratio='NaN'
         D2='NaN'
-#################METHOD Schlebusch et al 2012 ############
+    ## Method from Schlebusch et al 2012
     Ccount1=1.0*n3+0.5*n6
     D1orD2count1=0.5*n5+1.0*n7
     Ccount2=1.0*n4+0.5*n7
@@ -447,18 +461,19 @@ def estimate_param(counts):
     P2=-log((3.0/2.0)*D1orD2count2/(D1orD2count2+Ccount2))
     P1_time=P1*thetaA
     P2_time=P2*thetaA
-##################METHOD Schlebusch et al 2012 ############
-##################Fst############
     Fst=(2.0*n3+2.0*n4-1.0*n5)/(1.0*n1+1.0*n2+2.0*n3+2.0*n4+1.0*n5+1.0*n6+1.0*n7)
-##################Fst############
+    ##
     return [alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_t1_t2_diff,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst]
 
 def get_estimates_vcf_TT(count_list):
+    '''Function to obtain all parameter estimates and wbj statistics for TT method. Observed parameters for whole genome is calculated, then local parameters per window are calcualted, and both used to obtian wbj estimates. 
+    Input: List of count lists per window, will be in order of chromosome but that information is not needed
+    Output: a list containing lists for each parameter of observed parameter values, wbj mean and wbj variance.'''
     l_alfa1 = l_alfa2 = l_thetaA = l_mu_t1 = l_mu_t2 = l_mu_nu1 = l_mu_nu2 = l_mu_diff_t1_t2 = l_drift1 = l_drift2 = l_theta1 = l_theta2 = l_W1ratio = l_W2ratio = l_D1 = l_D2 = l_P1 = l_P2 = l_P1_time = l_P2_time = l_Fst = num_sites = []
     g=0
     n=0
     obs_d = [0 for i in range(9)]
-    # Using list comprehension and zipping, we can sum a list of lists faster than a loop
+    # Using list comprehension and zipping, sum up the list of lists to obtain the observed data
     obs_d = [sum(count_window) for count_window in zip(*count_list)]
     try:
         [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]=estimate_param(obs_d)
@@ -467,7 +482,7 @@ def get_estimates_vcf_TT(count_list):
         print()
         print("Help: This error occurs when one of the genotype situation counts in the offending line of code is 0. If counts are all 0, check file formatting, the script can't read your genomes. If only some cases are 0, make sure the windows are wide enough or reconsider the comparison between the populations.")
         sys.exit(1)
-
+    # Then go through and estimate parameters per window
     for count_window in count_list:
         if sum(count_window)>0:
             g+=1
@@ -480,6 +495,7 @@ def get_estimates_vcf_TT(count_list):
                 print()
                 print("Help: This error occurs when one of the genotype situation counts in the offending line of code is 0. If counts are all 0, check file formatting, the script can't read your genomes. If only some cases are 0, make sure the windows are wide enough or reconsider the comparison between the populations.")
                 sys.exit(1)
+            # Add the local parameters to the lists of all local parameters
             l_alfa1.append(alfa1)
             l_alfa2.append(alfa2)
             l_thetaA.append(thetaA)
@@ -502,6 +518,7 @@ def get_estimates_vcf_TT(count_list):
             l_P2_time.append(P2_time)
             l_Fst.append(Fst)
             num_sites.append(sum(count_window))
+    # Obtain wbj results for each parameter
     res=[wbj.get_WBJ_mean_var(g,n,obs_alfa1,l_alfa1,num_sites)]
     res.append(wbj.get_WBJ_mean_var(g,n,obs_alfa2,l_alfa2,num_sites))
     res.append(wbj.get_WBJ_mean_var(g,n,obs_thetaA,l_thetaA,num_sites))

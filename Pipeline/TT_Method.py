@@ -89,29 +89,29 @@ if file_type == 'vcf':
     # To avoid infinite recursion
     if __name__ == '__main__':
         with multiprocessing.Pool() as pool:
-            # Computes for files in parallel using CPU cores available to user, returns one directory of counts with chromosomes as keys and one directory of window positions in the same order with chromosomes as keys
+            # Computes for files in parallel using CPU cores available to user
             results = pool.map(functions.get_counts_vcf_TT, iterables)
     
-# List of counts and list of window positions
+# From results get a list of the counts and if user selected, print the counts by chromosome and window and output to file
 counts = []
-
-# Open count output file if desired by user
 if print_counts:
     count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
-
-# To get a list of counts from the results, and print counts by chromosome by window if user desires
+# Comparison being one group of files if multiple were submitted
 for comparison in results:
+    # The first dictionary in a comparison contains the chromosome and counts
     for key in comparison[0]:
         counts.extend(comparison[0][key])
         if print_counts:
             count_file.write("#" + key + "\n")
+            # The second dictionary in a comparison contains the chromosome and window positions
             for i in range(len(comparison[1][key])):
                 count_file.write(str(comparison[1][key][i]) + "\t" + str(comparison[0][key][i]) + "\n")
-
 if print_counts: count_file.close()
 
+# Obtain estiamtes of the model parameters using the counts. For each parameter is the observed mean from all counts, the wbj mean and the wbj variance
 [alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_diff_t1_t2,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst] = functions.get_estimates_vcf_TT(counts)
 
+# Open all output files, print the header and estimates, close all output files
 alfa1_out=open(out_dir+'/alfa1.res','w')
 alfa2_out=open(out_dir+'/alfa2.res','w')
 thetaA_out=open(out_dir+'/thetaA.res','w')
@@ -136,49 +136,27 @@ Fst_out=open(out_dir+'/Fst.res','w')
 
 header= '\t'.join(['pop1','pop2','obs_mean','wbj_mean','wbj_var'])+'\n'
 
-alfa1_out.write(header)
-alfa2_out.write(header)
-thetaA_out.write(header)
-mu_t1_out.write(header)
-mu_t2_out.write(header)
-mu_nu1_out.write(header)
-mu_nu2_out.write(header)
-mu_diff_t1_t2_out.write(header)
-drift1_out.write(header)
-drift2_out.write(header)
-theta1_out.write(header)
-theta2_out.write(header)
-W1ratio_out.write(header)
-W2ratio_out.write(header)
-D1_out.write(header)
-D2_out.write(header)
-P1_out.write(header)
-P2_out.write(header)
-P1_time_out.write(header)
-P2_time_out.write(header)
-Fst_out.write(header)
-
-alfa1_out.write('\t'.join([pop1_key,pop2_key,alfa1[0],alfa1[1],alfa1[2]])+'\n')
-alfa2_out.write('\t'.join([pop1_key,pop2_key,alfa2[0],alfa2[1],alfa2[2]])+'\n')
-thetaA_out.write('\t'.join([pop1_key,pop2_key,thetaA[0],thetaA[1],thetaA[2]])+'\n')
-mu_t1_out.write('\t'.join([pop1_key,pop2_key,mu_t1[0],mu_t1[1],mu_t1[2]])+'\n')
-mu_t2_out.write('\t'.join([pop1_key,pop2_key,mu_t2[0],mu_t2[1],mu_t2[2]])+'\n')
-mu_nu1_out.write('\t'.join([pop1_key,pop2_key,mu_nu1[0],mu_nu1[1],mu_nu1[2]])+'\n')
-mu_nu2_out.write('\t'.join([pop1_key,pop2_key,mu_nu2[0],mu_nu2[1],mu_nu2[2]])+'\n')
-mu_diff_t1_t2_out.write('\t'.join([pop1_key,pop2_key,mu_diff_t1_t2[0],mu_diff_t1_t2[1],mu_diff_t1_t2[2]])+'\n')
-drift1_out.write('\t'.join([pop1_key,pop2_key,drift1[0],drift1[1],drift1[2]])+'\n')
-drift2_out.write('\t'.join([pop1_key,pop2_key,drift2[0],drift2[1],drift2[2]])+'\n')
-theta1_out.write('\t'.join([pop1_key,pop2_key,theta1[0],theta1[1],theta1[2]])+'\n')
-theta2_out.write('\t'.join([pop1_key,pop2_key,theta2[0],theta2[1],theta2[2]])+'\n')
-W1ratio_out.write('\t'.join([pop1_key,pop2_key,W1ratio[0],W1ratio[1],W1ratio[2]])+'\n')
-W2ratio_out.write('\t'.join([pop1_key,pop2_key,W2ratio[0],W2ratio[1],W2ratio[2]])+'\n')
-D1_out.write('\t'.join([pop1_key,pop2_key,D1[0],D1[1],D1[2]])+'\n')
-D2_out.write('\t'.join([pop1_key,pop2_key,D2[0],D2[1],D2[2]])+'\n')
-P1_out.write('\t'.join([pop1_key,pop2_key,P1[0],P1[1],P1[2]])+'\n')
-P2_out.write('\t'.join([pop1_key,pop2_key,P2[0],P2[1],P2[2]])+'\n')
-P1_time_out.write('\t'.join([pop1_key,pop2_key,P1_time[0],P1_time[1],P1_time[2]])+'\n')
-P2_time_out.write('\t'.join([pop1_key,pop2_key,P2_time[0],P2_time[1],P2_time[2]])+'\n')
-Fst_out.write('\t'.join([pop1_key,pop2_key,Fst[0],Fst[1],Fst[2]])+'\n')
+alfa1_out.write(header + '\t'.join([pop1_key,pop2_key,alfa1[0],alfa1[1],alfa1[2]])+'\n')
+alfa2_out.write(header + '\t'.join([pop1_key,pop2_key,alfa2[0],alfa2[1],alfa2[2]])+'\n')
+thetaA_out.write(header + '\t'.join([pop1_key,pop2_key,thetaA[0],thetaA[1],thetaA[2]])+'\n')
+mu_t1_out.write(header + '\t'.join([pop1_key,pop2_key,mu_t1[0],mu_t1[1],mu_t1[2]])+'\n')
+mu_t2_out.write(header + '\t'.join([pop1_key,pop2_key,mu_t2[0],mu_t2[1],mu_t2[2]])+'\n')
+mu_nu1_out.write(header + '\t'.join([pop1_key,pop2_key,mu_nu1[0],mu_nu1[1],mu_nu1[2]])+'\n')
+mu_nu2_out.write(header + '\t'.join([pop1_key,pop2_key,mu_nu2[0],mu_nu2[1],mu_nu2[2]])+'\n')
+mu_diff_t1_t2_out.write(header + '\t'.join([pop1_key,pop2_key,mu_diff_t1_t2[0],mu_diff_t1_t2[1],mu_diff_t1_t2[2]])+'\n')
+drift1_out.write(header + '\t'.join([pop1_key,pop2_key,drift1[0],drift1[1],drift1[2]])+'\n')
+drift2_out.write(header + '\t'.join([pop1_key,pop2_key,drift2[0],drift2[1],drift2[2]])+'\n')
+theta1_out.write(header + '\t'.join([pop1_key,pop2_key,theta1[0],theta1[1],theta1[2]])+'\n')
+theta2_out.write(header + '\t'.join([pop1_key,pop2_key,theta2[0],theta2[1],theta2[2]])+'\n')
+W1ratio_out.write(header + '\t'.join([pop1_key,pop2_key,W1ratio[0],W1ratio[1],W1ratio[2]])+'\n')
+W2ratio_out.write(header + '\t'.join([pop1_key,pop2_key,W2ratio[0],W2ratio[1],W2ratio[2]])+'\n')
+D1_out.write(header + '\t'.join([pop1_key,pop2_key,D1[0],D1[1],D1[2]])+'\n')
+D2_out.write(header + '\t'.join([pop1_key,pop2_key,D2[0],D2[1],D2[2]])+'\n')
+P1_out.write(header + '\t'.join([pop1_key,pop2_key,P1[0],P1[1],P1[2]])+'\n')
+P2_out.write(header + '\t'.join([pop1_key,pop2_key,P2[0],P2[1],P2[2]])+'\n')
+P1_time_out.write(header + '\t'.join([pop1_key,pop2_key,P1_time[0],P1_time[1],P1_time[2]])+'\n')
+P2_time_out.write(header + '\t'.join([pop1_key,pop2_key,P2_time[0],P2_time[1],P2_time[2]])+'\n')
+Fst_out.write(header + '\t'.join([pop1_key,pop2_key,Fst[0],Fst[1],Fst[2]])+'\n')
 
 alfa1_out.close()
 alfa2_out.close()
