@@ -44,7 +44,7 @@ parser.add_argument("-k", "--keywords",
                     help = "names of 2 populations, MUST be same order as -1 and -2 flag")
 parser.add_argument("-o", "--out", 
                     default = "TT_out_pop1_pop2",
-                    help = "name of the output directory")
+                    help = "name of the output directory, defaults to creating one named 'TT_out_pop1_pop2' in current directory")
 parser.add_argument("-c", "--counts", 
                     action="store_true",
                     help = "output a file with all counts per chromosome per window")
