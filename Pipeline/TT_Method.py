@@ -45,14 +45,15 @@ parser.add_argument("-k", "--keywords",
 parser.add_argument("-o", "--out", 
                     default = "TT_out_pop1_pop2",
                     help = "name of the output directory")
-# REMOVE: for testing purposes only
-parser.add_argument("--test", action = "store_true")
 parser.add_argument("-c", "--counts", 
                     action="store_true",
                     help = "output a file with all counts per chromosome per window")
 parser.add_argument("-w", "--window", 
                     default = "5000000",
                     help = "set the window size for calculating local parameters")
+# REMOVE --test: for testing purposes only
+parser.add_argument("--test", action = "store_true")
+
 args = parser.parse_args()
 
 # Turn args into informatively named variables
