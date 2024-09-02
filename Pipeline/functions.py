@@ -86,7 +86,6 @@ def get_counts_vcf_TT(iterable):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
     Input:
     pop1, pop2, anc = filepaths for all files, list of one or more
-    only_one_file = true or false if all chromosomes are in one file
     low_cov, high_cov = coverage thresholds for filtering, set up in main method file
     filters = list of values considered acceptable for FILTER field of vcf file
     Output: 
