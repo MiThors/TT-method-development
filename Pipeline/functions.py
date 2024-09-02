@@ -61,7 +61,7 @@ def get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1,
     elif alt_1 == '.' and ref_1 != nucl_A: pop1_derived = 2
     # One or more derived, counting alternate nucleotide in pop1
     elif ref_1 == nucl_A: pop1_derived = genotype_1.count("1")
-    # Reference is the derived nucleotide, one or more derived in pop1
+    # Reference is the derived nucleotide, one or more derived, counting reference nucleotide in pop1
     else: pop1_derived = genotype_1.count("0")
     # Same as above for pop 2
     if alt_2 == '.' and ref_2 == nucl_A: pop2_derived = 0
