@@ -162,6 +162,7 @@ def get_counts_vcf_TT(iterable):
                     if not pos_1 == pos_2 == pos_A: 
                         print(f"Error: Files never managed to be reach at the same position, {anc} ended at {pos_A}, {pop1} at {pos_1}, and {pop2} at {pos_2}. Please check that correct files are being compared, or file formatting.")
                         sys.exit(1)
+                    # Once those checks are passed, start getting genotype and chromosome information
                     nucl_A = la[nucl_A_ind]
                     ref_1, ref_2 = l1[ref_1_ind], l2[ref_2_ind]
                     alt_1, alt_2 = l1[alt_1_ind], l2[alt_2_ind]
