@@ -83,10 +83,8 @@ if not args.test: os.mkdir(out_dir)
 counts_dict = {}
 
 if file_type == 'vcf': 
-    # Create iterable list with all input parameters for multicore counting
-    iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] 
-    # Run counting on each set of files
-    for i in range(file_tot)]
+    # Create iterable list for each set of files with all input parameters for multicore counting
+    iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
     # To avoid infinite recursion
     if __name__ == '__main__':
         with multiprocessing.Pool() as pool:
