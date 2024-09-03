@@ -79,9 +79,6 @@ if any(len(lst) != file_tot for lst in [files_pop2, files_anc]):
 # Make output dir, will complain if it already exists, which is why this is so early in the script
 if not args.test: os.mkdir(out_dir)
 
-# Initialise the directory for all the counts per chromosome
-counts_dict = {}
-
 if file_type == 'vcf': 
     # Create iterable list for each set of files with all input parameters for multicore counting
     iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
@@ -90,14 +87,12 @@ if file_type == 'vcf':
         with multiprocessing.Pool() as pool:
             # Computes for files in parallel using CPU cores available to user
             results = pool.map(functions.get_counts_vcf_TT, iterables)
+        pool.close()
     
-print(results)
-
-# From results get a list of the counts and if user selected, print the counts by chromosome and window and output to file
+# Combine results into a single dictionary of the counts and if user selected, print the counts by chromosome and window and output to file
 counts = []
 if print_counts:
     count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
-# Comparison being one group of files if multiple were submitted
 for comparison in results:
     for chrom in comparison:
         # First list for each chromosome are the counts

@@ -42,6 +42,10 @@ parser.add_argument("-a", "--ancestral",
                     required = True,
                     nargs = '+',
                     help = "files containing ancestral states")
+parser.add_argument("-T", "--TTCounts",
+                    nargs = 1,
+                    default = False,
+                    help = "optional file location of TT counts if already run")
 parser.add_argument("-k", "--keywords",  
                     nargs = 3, 
                     default = ["pop1", "pop2", "outgroup"],
@@ -65,6 +69,7 @@ files_pop2 = args.pop2
 files_outgroup = args.outgroup
 file_type = args.type
 files_anc = args.ancestral
+file_TT = args.TTcounts
 pop1_key = args.keywords[0] 
 pop2_key = args.keywords[1]
 outg_key = args.keywords[2]
@@ -91,14 +96,15 @@ counts_dict = {}
 # For vcf filetype
 if file_type == 'vcf': 
     # Create iterable list with all input parameters for counting
-    iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
+    if not file_TT: iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
     iterables_outgroup = [[files_pop1[i], files_pop2[i], files_outgroup[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
     # To avoid infinite recursion
     if __name__ == '__main__':
         with multiprocessing.Pool() as pool:
             # Computes for files in parallel using CPU cores available to user
-            results = pool.map(functions.get_counts_vcf_TT, iterables)
+            if not file_TT: results = pool.map(functions.get_counts_vcf_TT, iterables)
             results_outgroup = pool.map(functions.get_counts_vcf_TTo, iterables_outgroup)
+        pool.close()
 
 # From TT results get a list of the counts and if user selected, print the counts by chromosome and window and output to file
 counts = []
@@ -107,21 +113,22 @@ if print_counts:
     count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
     outgroup_count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TTo_Counts.txt", 'w')
 # Comparison being one group of files if multiple were submitted
-for comparison in results:
-    for chrom in comparison:
-        # First list for each chromosome are the counts
-        counts.extend(comparison[chrom][0])
-        if print_counts:
-            count_file.write("#" + chrom + "\n")
-            # The second list contains the window positions
-            for i in range(len(comparison[chrom][0])):
-                count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
+if not file_TT:
+    for comparison in results:
+        for chrom in comparison:
+            # First list for each chromosome are the counts
+            counts.extend(comparison[chrom][0])
+            if print_counts:
+                count_file.write("#" + chrom + "\n")
+                # The second list contains the window positions
+                for i in range(len(comparison[chrom][0])):
+                    count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
 
 # Same is done for the TTo counts 
 for comparison in results_outgroup:
     for chrom in comparison:
         # First list for each chromosome are the counts
-        counts.extend(comparison[chrom][0])
+        outgroup_counts.extend(comparison[chrom][0])
         if print_counts:
             outgroup_count_file.write("#" + chrom + "\n")
             # The second list contains the window positions
