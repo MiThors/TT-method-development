@@ -6,7 +6,7 @@ Please see the Manual (ReadMe.md) or use the command 'python3 TT_Method.py --hel
 Milo Thordarson: anth2886@student.uu.se'''
 
 # Module loading
-import functions
+import functions # TTo specific functions from functions.py file
 import argparse
 import os
 import multiprocessing
@@ -16,7 +16,7 @@ import sys
 # These represent what you consider low and high coverage for a genotype position, as an int
 low_coverage = 10
 high_coverage = 500
-# This list contains all acceptable values in the FILTERS column of a vcf file, default set to be passing all filters or a non-entry
+# All acceptable values in the FILTERS column of a vcf file, default set to be passing all filters or a non-entry
 vcf_filters = ['PASS','.']
 
 
@@ -49,13 +49,14 @@ parser.add_argument("-k", "--keywords",
 parser.add_argument("-o", "--out", 
                     default = "TTo_out_pop1_pop2",
                     help = "name of the output directory")
-parser.add_argument("--test", action = "store_true")
 parser.add_argument("-c", "--counts",
                     action="store_true",
                     help = "output a file with all counts per chromosome per window")
 parser.add_argument("-w", "--window",
                     default = "5000000",
                     help = "set the window size for calculating local parameters")
+# REMOVE --test: for testing purposes only
+parser.add_argument("--test", action = "store_true")
 args = parser.parse_args()
 
 # Turn args into informatively named variables
@@ -92,14 +93,14 @@ if file_type == 'vcf':
     # Create iterable list with all input parameters for counting
     iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
     iterables_outgroup = [[files_pop1[i], files_pop2[i], files_outgroup[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
-
-# To avoid infinite recursion
+    # To avoid infinite recursion
     if __name__ == '__main__':
         with multiprocessing.Pool() as pool:
             # Computes for files in parallel using CPU cores available to user
             results = pool.map(functions.get_counts_vcf_TT, iterables)
             results_outgroup = pool.map(functions.get_counts_vcf_TTo, iterables_outgroup)
-    
+
+# From results get a list of the counts and if user selected, print the counts by chromosome and window and output to file
 counts = []
 windows = {}
 counts_outgroup = []

@@ -231,8 +231,7 @@ def get_counts_vcf_TT(iterable):
 
 def get_counts_vcf_TTo(iterable):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
-    pop1, pop2, anc = filepaths for all files, list of one or more
-    only_one_file = true or false if all chromosomes are in one file
+    pop1, pop2, outgroup, anc = filepaths for all files, list of one or more
     low_cov, high_cov = coverage thresholds for filtering, set up in main method file
     filters = list of values considered acceptable for FILTER field of vcf file
     Returns all eight count scenarios in a dictionary, keys are chromosomes, one list of counts per chromosome'''
@@ -251,7 +250,7 @@ def get_counts_vcf_TTo(iterable):
     out_dict = {}
     local_count = []
     win_pos = {}
-    win_start = {}
+    win_start = 0
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(pop1, 'rt', encoding='utf-8') as file_1:
@@ -290,7 +289,7 @@ def get_counts_vcf_TTo(iterable):
                         l2 = file_2.readline().strip().split()
                         lo = file_og.readline()
                         la = ancestral.readline().strip().split()
-                        if not l1 or not l2 or not la : 
+                        if not l1 or not l2 or not la or not lo: 
                             if local_count:
                                 out_dict[current_chrom].append(local_count)
                                 win_pos[current_chrom].append((win_start, current_pos))
@@ -333,7 +332,7 @@ def get_counts_vcf_TTo(iterable):
                         
                         # Check if current chromosome exists in the dict already, if not add another key for that
                         if chrom_1 not in out_dict: 
-                            out_dict.update({chrom_1 : []})
+                            out_dict.update({chrom_1: []})
                             win_pos.update({chrom_1: []})
                             if local_count: 
                                 out_dict[current_chrom].append(local_count)
@@ -384,7 +383,7 @@ def get_counts_vcf_TTo(iterable):
                         # Get the type of sample configuration, represented as the index of m0, m1, ... m8
                         configuration_index = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
                         # Add one count to the relevant chromosome and configuration count
-                        out_dict[chrom_1][configuration_index] += 1
+                        local_count[configuration_index] += 1
     if out_dict and win_pos:
         return out_dict, win_pos
     else:
