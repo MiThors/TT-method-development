@@ -90,8 +90,8 @@ def get_counts_vcf_TT(iterable):
     low_cov, high_cov = coverage thresholds for filtering, set up in main method file
     filters = list of values considered acceptable for FILTER field of vcf file
     Output: 
-    out_dict = dictionary, keys are chromosomes, values are list of count lists per window
-    win_pos = dictionary, keys are chromosomes, values are list of tuples containing start and end position of each window'''
+    out_dict = dictionary, keys are chromosomes, values are list of count lists per window and tuple of start and end position of each window
+    '''
     # Variable initialisation
     pop1 = iterable[0]
     pop2 = iterable[1]
@@ -284,7 +284,7 @@ def get_counts_vcf_TTo(iterable):
                         print(f"Error: Could not find all columns in in one or multiple vcf files {pop1}, {pop2} or {file_og}, or all columns in ancestral file. Please check that formatting is correct.")
                         sys.exit(1)
 
-                    while l1 and l2 and la:
+                    while l1 and l2 and la and lo:
                         l1 = file_1.readline().strip().split()
                         l2 = file_2.readline().strip().split()
                         lo = file_og.readline()
