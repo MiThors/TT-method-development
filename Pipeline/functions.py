@@ -105,7 +105,6 @@ def get_counts_vcf_TT(iterable):
     window_step = 0
     out_dict = {}
     local_count = []
-    win_pos = {}
     win_start = 0
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
@@ -139,8 +138,8 @@ def get_counts_vcf_TT(iterable):
                     la = ancestral.readline().strip().split()
                     # Case for the end of the file, update dictionaries and break
                     if not l1 or not l2 or not la: 
-                        if local_count: out_dict[current_chrom].append(local_count)
-                        win_pos[current_chrom].append((win_start, current_pos))
+                        if local_count: out_dict[current_chrom][0].append(local_count)
+                        out_dict[current_chrom][1].append((win_start, current_pos))
                         break
                     pos_1 = int(l1[pos_1_ind])
                     pos_2 = int(l2[pos_2_ind])
@@ -174,11 +173,10 @@ def get_counts_vcf_TT(iterable):
                         sys.exit(1)
                     # Check if current chromosome exists in the dict already, if not add another key for that and if counting was done on a previous chromosome, update dictionaries
                     if chrom_1 not in out_dict: 
-                        out_dict.update({chrom_1 : []})
-                        win_pos.update({chrom_1: []})
+                        out_dict.update({chrom_1 : [[],[]]})
                         if local_count: 
-                            out_dict[current_chrom].append(local_count)
-                            win_pos[current_chrom].append((win_start, current_pos))
+                            out_dict[current_chrom][0].append(local_count)
+                            out_dict[current_chrom][1].append((win_start, current_pos))
                         local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                         window_step = 0
                     # If at the start of a new window, note the starting position
@@ -186,10 +184,10 @@ def get_counts_vcf_TT(iterable):
                         win_start = pos_1
                     # If at the end of a window, update output directories and start a new window
                     if window_step >= window_size:
-                        out_dict[chrom_1].append(local_count)
+                        out_dict[chrom_1][0].append(local_count)
                         local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                         window_step = 0
-                        win_pos[chrom_1].append((win_start, current_pos))
+                        out_dict[chrom_1][1].append((win_start, current_pos))
                         win_start = pos_1
                     # To keep track of the previous chromosome and position for updating the directories correctly
                     current_chrom = chrom_1
@@ -223,8 +221,8 @@ def get_counts_vcf_TT(iterable):
                     # Add one count to the relevant chromosome and configuration count
                     local_count[configuration_index] += 1
     # Check if the output exists, and if so return it, else there has been an error       
-    if out_dict and win_pos:
-        return out_dict, win_pos
+    if out_dict:
+        return out_dict
     else:
         print(f"Error: It seems that every position in files {pop1} and {pop2} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
@@ -249,7 +247,6 @@ def get_counts_vcf_TTo(iterable):
     window_step = 0
     out_dict = {}
     local_count = []
-    win_pos = {}
     win_start = 0
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
@@ -287,12 +284,12 @@ def get_counts_vcf_TTo(iterable):
                     while l1 and l2 and la and lo:
                         l1 = file_1.readline().strip().split()
                         l2 = file_2.readline().strip().split()
-                        lo = file_og.readline()
+                        lo = file_og.readline().strip().split()
                         la = ancestral.readline().strip().split()
                         if not l1 or not l2 or not la or not lo: 
                             if local_count:
-                                out_dict[current_chrom].append(local_count)
-                                win_pos[current_chrom].append((win_start, current_pos))
+                                out_dict[current_chrom][0].append(local_count)
+                                out_dict[current_chrom][1].append((win_start, current_pos))
                             break
                         pos_1 = int(l1[pos_1_ind])
                         pos_2 = int(l2[pos_2_ind])
@@ -332,11 +329,10 @@ def get_counts_vcf_TTo(iterable):
                         
                         # Check if current chromosome exists in the dict already, if not add another key for that
                         if chrom_1 not in out_dict: 
-                            out_dict.update({chrom_1: []})
-                            win_pos.update({chrom_1: []})
+                            out_dict.update({chrom_1: [[],[]]})
                             if local_count: 
-                                out_dict[current_chrom].append(local_count)
-                                win_pos[current_chrom].append((win_start, current_pos))
+                                out_dict[current_chrom][0].append(local_count)
+                                out_dict[current_chrom][1].append((win_start, current_pos))
                             local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                             window_step = 0
                             win_start = pos_1
@@ -345,10 +341,10 @@ def get_counts_vcf_TTo(iterable):
                             win_start = pos_1
 
                         if window_step >= window_size:
-                            out_dict[chrom_1].append(local_count)
+                            out_dict[chrom_1][0].append(local_count)
                             local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                             window_step = 0
-                            win_pos[chrom_1].append((win_start, current_pos))
+                            out_dict[chrom_1][1].append((win_start, current_pos))
                             win_start = pos_1
 
                         current_chrom = chrom_1
@@ -384,8 +380,8 @@ def get_counts_vcf_TTo(iterable):
                         configuration_index = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
                         # Add one count to the relevant chromosome and configuration count
                         local_count[configuration_index] += 1
-    if out_dict and win_pos:
-        return out_dict, win_pos
+    if out_dict:
+        return out_dict
     else:
         print(f"Error: It seems that every position in files {pop1}, {pop2} and {outgroup} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)

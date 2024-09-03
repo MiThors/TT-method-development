@@ -91,20 +91,22 @@ if file_type == 'vcf':
             # Computes for files in parallel using CPU cores available to user
             results = pool.map(functions.get_counts_vcf_TT, iterables)
     
+print(results)
+
 # From results get a list of the counts and if user selected, print the counts by chromosome and window and output to file
 counts = []
 if print_counts:
     count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
 # Comparison being one group of files if multiple were submitted
 for comparison in results:
-    # The first dictionary in a comparison contains the chromosome and counts
-    for key in comparison[0]:
-        counts.extend(comparison[0][key])
+    for chrom in comparison:
+        # First list for each chromosome are the counts
+        counts.extend(comparison[chrom][0])
         if print_counts:
-            count_file.write("#" + key + "\n")
-            # The second dictionary in a comparison contains the chromosome and window positions
-            for i in range(len(comparison[1][key])):
-                count_file.write(str(comparison[1][key][i]) + "\t" + str(comparison[0][key][i]) + "\n")
+            count_file.write("#" + chrom + "\n")
+            # The second list contains the window positions
+            for i in range(len(comparison[chrom][0])):
+                count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
 if print_counts: count_file.close()
 
 # Obtain estiamtes of the model parameters using the counts. For each parameter is the observed mean from all counts, the wbj mean and the wbj variance

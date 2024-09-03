@@ -100,39 +100,32 @@ if file_type == 'vcf':
             results = pool.map(functions.get_counts_vcf_TT, iterables)
             results_outgroup = pool.map(functions.get_counts_vcf_TTo, iterables_outgroup)
 
-# From results get a list of the counts and if user selected, print the counts by chromosome and window and output to file
+# From TT results get a list of the counts and if user selected, print the counts by chromosome and window and output to file
 counts = []
-windows = {}
-counts_outgroup = []
-windows_outgroup = {}
-
+outgroup_counts = []
 if print_counts:
     count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
-    count_file_outgroup = open(out_dir + "/" + pop1_key + pop2_key + "_TTo_Counts.txt", 'w')
-
+    outgroup_count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TTo_Counts.txt", 'w')
+# Comparison being one group of files if multiple were submitted
 for comparison in results:
-    for key in comparison[1]:
-        if not key in windows:
-            windows.update({key: []})
-    counts.extend(comparison[0][key])
-    windows[key].extend(comparison[1][key])
-    if print_counts:
-        count_file.write("#" + key + "\n")
-        for i in range(len(windows[key])):
-                count_file.write(str(windows[key][i]) + "\t" + str(counts[i]) + "\n")
+    for chrom in comparison:
+        # First list for each chromosome are the counts
+        counts.extend(comparison[chrom][0])
+        if print_counts:
+            count_file.write("#" + chrom + "\n")
+            # The second list contains the window positions
+            for i in range(len(comparison[chrom][0])):
+                count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
 
+# Same is done for the TTo counts 
 for comparison in results_outgroup:
-    for key in comparison[1]:
-        if not key in windows_outgroup:
-            windows_outgroup.update({key: []})
-    counts_outgroup.extend(comparison[0][key])
-    windows_outgroup[key].extend(comparison[1][key])
-    if print_counts:
-        count_file_outgroup.write("#" + key + "\n")
-        for i in range(len(windows_outgroup[key])):
-                count_file_outgroup.write(str(windows_outgroup[key][i]) + "\t" + str(counts_outgroup[i]) + "\n")
-
-if print_counts: 
-    count_file.close()
-    count_file_outgroup.close()
+    for chrom in comparison:
+        # First list for each chromosome are the counts
+        counts.extend(comparison[chrom][0])
+        if print_counts:
+            outgroup_count_file.write("#" + chrom + "\n")
+            # The second list contains the window positions
+            for i in range(len(comparison[chrom][0])):
+                outgroup_count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
+if print_counts: outgroup_count_file.close()
 
