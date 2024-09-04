@@ -163,3 +163,6 @@ for comparison in results_outgroup:
             for i in range(len(comparison[chrom][0])):
                 outgroup_count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
 if print_counts: outgroup_count_file.close()
+
+[alfa1,alfa2,test1,test2,y,tau2_1,tau2_2,tau3_1,tau3_2,B1,B2,U1,U2,V1,V2,tau_test,T1,T2,J1,J2,m_counts] = functions.get_estimates_vcf_TTo(counts, outgroup_counts)
+print(alfa1,alfa2,test1,test2,y,tau2_1,tau2_2,tau3_1,tau3_2,B1,B2,U1,U2,V1,V2,tau_test,T1,T2,J1,J2,m_counts)

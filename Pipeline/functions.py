@@ -386,7 +386,7 @@ def get_counts_vcf_TTo(iterable):
         print(f"Error: It seems that every position in files {pop1}, {pop2} and {outgroup} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
 
-def estimate_param(counts):
+def estimate_param_TT(counts):
     '''Function for estimating the parameters of the model for TT counts. Methods and math are not mine (Milo), see the original TT paper for more information (on the github page).
     Input: list of counts for each of the eight scenarios for either the entire genome (observed) or just one window (local)
     Output: list of all the different parameters'''
@@ -472,7 +472,7 @@ def get_estimates_vcf_TT(count_list):
     # Using list comprehension and zipping, sum up the list of lists to obtain the observed data
     obs_d = [sum(count_window) for count_window in zip(*count_list)]
     try:
-        [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]=estimate_param(obs_d)
+        [obs_alfa1,obs_alfa2,obs_thetaA,obs_mu_t1,obs_mu_t2,obs_mu_nu1,obs_mu_nu2,obs_mu_diff_t1_t2,obs_drift1,obs_drift2,obs_theta1,obs_theta2,obs_W1ratio,obs_W2ratio,obs_D1,obs_D2,obs_P1,obs_P2,obs_P1_time,obs_P2_time,obs_Fst]=estimate_param_TT(obs_d)
     except ZeroDivisionError as zeros:
         traceback.print_exc()
         print()
@@ -485,7 +485,7 @@ def get_estimates_vcf_TT(count_list):
             n+=sum(count_window)
             local_count=[obs_d[0]-count_window[0],obs_d[1]-count_window[1],obs_d[2]-count_window[2],obs_d[3]-count_window[3],obs_d[4]-count_window[4],obs_d[5]-count_window[5],obs_d[6]-count_window[6],obs_d[7]-count_window[7],obs_d[8]-count_window[8]]
             try:
-                [alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_diff_t1_t2,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst]=estimate_param(local_count)
+                [alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_diff_t1_t2,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst]=estimate_param_TT(local_count)
             except ZeroDivisionError as zeros:
                 traceback.print_exc()
                 print()
@@ -537,3 +537,142 @@ def get_estimates_vcf_TT(count_list):
     res.append(wbj.get_WBJ_mean_var(g,n,obs_P2_time,l_P2_time,num_sites))
     res.append(wbj.get_WBJ_mean_var(g,n,obs_Fst,l_Fst,num_sites))
     return res
+
+def get_cond_estimates(counts):
+    n1, n2, n3, n4, n5, n6, n7 = counts[1:8]
+    n_tot = 1.0*sum(counts)
+    alfa1=1.0*(n1+n7+n5)/(n1+2.0*n3+n6+0.5*n6)
+    alfa2=1.0*(n2+n6+n5)/(n2+2.0*n4+n7+0.5*n5)
+    test1=(2.0*n1+n5)/(2.0*n2+n5)-(2.0*n7+n5)/(2.0*n6+n5)
+    test2=((n1-n2)+2.0*(n3-n4)+(n6-n7))/n_tot
+
+    return [alfa1,alfa2,test1,test2]
+
+def estimate_param_TTo(counts, outgroup_counts):
+    '''Function for estimating the parameters of the model for TTo counts. Methods and math are not mine (Milo), see the original TT paper for more information (on the github page).
+    Input: list of counts and outgroup confirmed counts for each of the eight scenarios for either the entire genome (observed) or just one window (local)
+    Output: list of all the different parameters'''
+    [alfa1,alfa2,test1,test2]=get_cond_estimates(outgroup_counts)
+    n1, n2, n3, n4, n5, n6, n7 = counts[1:8]
+    n_tot=1.0*sum(counts)
+    if alfa1*alfa2>0:
+        y=(9.0*n5)/(n_tot*2.0*alfa1*alfa2)
+        tau2_1=(3.0* (2.0*alfa1*n6-(1.0-alfa1)*n5) ) /(n_tot*2.0*alfa1*alfa2)
+        tau2_2=(3.0* (2.0*alfa2*n7-(1.0-alfa2)*n5) ) /(n_tot*2.0*alfa1*alfa2)
+        tau3_1=((5.0-2.0*alfa1)*n5-4.0*alfa1*n6 ) /(n_tot*2.0*alfa1*alfa2)
+        tau3_2=((5.0-2.0*alfa2)*n5-4.0*alfa2*n7 ) /(n_tot*2.0*alfa1*alfa2)
+        B1=(0.5*n1+n3+0.5*n6+0.25*n5-(5.0*n5/(4.0*alfa1*alfa2)) )/n_tot
+        B2=(0.5*n2+n4+0.5*n7+0.25*n5-(5.0*n5/(4.0*alfa1*alfa2)) )/n_tot
+        mean_tau_3=0.5*(tau3_1+tau3_2)
+        mean_tau_2=0.5*(tau2_1+tau2_2)
+        T1=B1-0.5*mean_tau_3
+        T2=B2-0.5*mean_tau_3
+        J1=B1-(3.0*mean_tau_3)*(3.0*mean_tau_3)/(6.0*mean_tau_2)
+        J2=B2-(3.0*mean_tau_3)*(3.0*mean_tau_3)/(6.0*mean_tau_2)
+    else:
+        y='NaN'
+        tau2_1='NaN'
+        tau2_2='NaN'
+        tau3_1='NaN'
+        tau3_2='NaN'
+        B1='NaN'
+        B2='NaN'
+        T1='NaN'
+        T2='NaN'
+        J1='NaN'
+        J2='NaN'
+    U1=(0.5*(1.0-alfa1)*n1-alfa1*n3+0.5*(1.0-alfa2)*n7 +0.25*(2.0-alfa2)*n5 )/n_tot
+    U2=(0.5*(1.0-alfa2)*n2-alfa2*n4+0.5*(1.0-alfa1)*n6 +0.25*(2.0-alfa1)*n5 )/n_tot
+    if alfa1<1:
+        V1=(0.5*n1-  (alfa1/(1.0-alfa1))*n3  +0.5*n7/(1.0-alfa1)  )/n_tot
+    else:
+        V1='NaN'
+    if alfa2<1:
+        V2=(0.5*n2-(alfa2/(1.0-alfa2))*n4+0.5*n6/(1.0-alfa2))/n_tot
+
+    else:
+        V2='NaN'
+    tau_test=y-1.5*(tau2_1+tau2_2)
+
+    return [alfa1,alfa2,test1,test2,y,tau2_1,tau2_2,tau3_1,tau3_2,B1,B2,U1,U2,V1,V2,tau_test,T1,T2,J1,J2]
+
+def get_estimates_vcf_TTo(count_list, outgroup_count_list):
+    '''Function to obtain all parameter estimates and wbj statistics for TTo method. How does this work?
+    Input: List of count lists per window, will be in order of chromosome but that information is not needed, list of outgroup count lists, the same order
+    Output: a list containing lists for each parameter of observed parameter values, wbj mean and wbj variance.'''
+    l_alfa1 = l_alfa2 = l_test1 = l_test2 = l_y = l_tau2_1 = l_tau2_2 = l_tau3_1 = l_tau3_2 = l_B1 = l_B2 = l_U1 = l_U2 = l_V1 = l_V2 = l_tau_test = l_T1 = l_T2 = l_J1 = l_J2 = num_sites = []
+    g=0
+    n=0
+    obs_d = [0 for i in range(9)]
+    obd_cond_d = [0 for i in range(9)]
+    obs_d = [sum(count_window) for count_window in zip(*count_list)]
+    obs_cond_d = [sum(count_window) for count_window in zip(*outgroup_count_list)]
+    print(obs_d)
+    print(obs_cond_d)
+    try:
+        [obs_alfa1,obs_alfa2,obs_test1,obs_test2,obs_y,obs_tau2_1,obs_tau2_2,obs_tau3_1,obs_tau3_2,obs_B1,obs_B2,obs_U1,obs_U2,obs_V1,obs_V2,obs_tau_test,obs_T1,obs_T2,obs_J1,obs_J2]=estimate_param_TTo(obs_d,obs_cond_d)
+    except ZeroDivisionError as zeros:
+        traceback.print_exc()
+        print()
+        print("Help: This error occurs when one of the genotype situation counts in the offending line of code is 0. If counts are all 0, check file formatting, the script can't read your genomes. If only some cases are 0, make sure the windows are wide enough or reconsider the comparison between the populations.")
+        sys.exit(1)
+    for i in range(len(outgroup_count_list)):
+        count = count_list[i]
+        outgroup_count = count_list[i]
+        if sum(count)>0:
+            g+=1
+            n+=sum(count)
+            local_count=[obs_d[0]-count[0],obs_d[1]-count[1],obs_d[2]-count[2],obs_d[3]-count[3],obs_d[4]-count[4],obs_d[5]-count[5],obs_d[6]-count[6],obs_d[7]-count[7],obs_d[8]-count[8]]
+            local_outgroup_count=[obs_cond_d[0]-outgroup_count[0],obs_cond_d[1]-outgroup_count[1],obs_cond_d[2]-outgroup_count[2],obs_cond_d[3]-outgroup_count[3],obs_cond_d[4]-outgroup_count[4],obs_cond_d[5]-outgroup_count[5],obs_cond_d[6]-outgroup_count[6],obs_cond_d[7]-outgroup_count[7],obs_cond_d[8]-outgroup_count[8]]
+            try:
+                [alfa1,alfa2,test1,test2,y,tau2_1,tau2_2,tau3_1,tau3_2,B1,B2,U1,U2,V1,V2,tau_test,T1,T2,J1,J2]=estimate_param_TTo(local_count,local_outgroup_count)
+            except ZeroDivisionError as zeros:
+                traceback.print_exc()
+                print()
+                print("Help: This error occurs when one of the genotype situation counts in the offending line of code is 0. If counts are all 0, check file formatting, the script can't read your genomes. If only some cases are 0, make sure the windows are wide enough or reconsider the comparison between the populations.")
+                sys.exit(1)
+            l_alfa1.append(alfa1)
+            l_alfa2.append(alfa2)
+            l_test1.append(test1)
+            l_test2.append(test2)
+            l_y.append(y)
+            l_tau2_1.append(tau2_1)
+            l_tau2_2.append(tau2_2)
+            l_tau3_1.append(tau3_1)
+            l_tau3_2.append(tau3_2)
+            l_B1.append(B1)
+            l_B2.append(B2)
+            l_U1.append(U1)
+            l_U2.append(U2)
+            l_V1.append(V1)
+            l_V2.append(V2)
+            l_tau_test.append(tau_test)
+            l_T1.append(T1)
+            l_T2.append(T2)
+            l_J1.append(J1)
+            l_J2.append(J2)
+
+            num_sites.append(sum(count))
+    res=[wbj.get_WBJ_mean_var(g,n,obs_alfa1,l_alfa1,num_sites)]
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_alfa2,l_alfa2,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_test1,l_test1,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_test2,l_test2,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_y,l_y,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_tau2_1,l_tau2_1,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_tau2_2,l_tau2_2,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_tau3_1,l_tau3_1,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_tau3_2,l_tau3_2,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_B1,l_B1,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_B2,l_B2,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_U1,l_U1,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_U2,l_U2,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_V1,l_V1,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_V2,l_V2,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_tau_test,l_tau_test,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_T1,l_T1,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_T2,l_T2,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_J1,l_J1,num_sites))
+    res.append(wbj.get_WBJ_mean_var(g,n,obs_J2,l_J2,num_sites))
+    res.append([str(x) for x in obs_d])
+    return res
+
