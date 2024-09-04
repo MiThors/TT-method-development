@@ -69,7 +69,7 @@ files_pop2 = args.pop2
 files_outgroup = args.outgroup
 file_type = args.type
 files_anc = args.ancestral
-file_TT = args.TTcounts
+file_TT = args.TTCounts
 pop1_key = args.keywords[0] 
 pop2_key = args.keywords[1]
 outg_key = args.keywords[2]
@@ -110,7 +110,7 @@ if file_type == 'vcf':
 counts = []
 outgroup_counts = []
 if print_counts:
-    count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
+    if not file_TT: count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
     outgroup_count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TTo_Counts.txt", 'w')
 # Comparison being one group of files if multiple were submitted
 if not file_TT:
@@ -123,10 +123,38 @@ if not file_TT:
                 # The second list contains the window positions
                 for i in range(len(comparison[chrom][0])):
                     count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
+    if print_counts: count_file.close()
 
-# Same is done for the TTo counts 
+# Same is done for the TTo counts and if TT counts, chromosomes are compared
+if file_TT:
+    with open('TT_out_pop1_pop2/DSub100NSub100_TT_Counts.txt','rt',encoding='utf-8') as TT_counts:
+        l = TT_counts.readline()
+        chrom = l[1:].strip()
+        TT_dict = {chrom: [[],[]]}
+        l = TT_counts.readline()
+        while l:
+            if l[0] == '#' and l[1:] not in TT_dict: 
+                chrom = l[1:].strip()
+                TT_dict.update({chrom: [[],[]]})
+            elif l.strip(): 
+                all_values = l.split()
+                window = tuple([int(x.strip('(),')) for x in all_values[0:2]])
+                TT_dict[chrom][1].append(window)
+                count = [int(x.strip('[],')) for x in all_values[2:]]
+                TT_dict[chrom][0].append(count)
+                counts.append(count)
+                
+            l = TT_counts.readline()
+    TT_counts.close()
+  
 for comparison in results_outgroup:
     for chrom in comparison:
+        if file_TT and chrom not in TT_dict: 
+            print("Error: a chromosome generated from this TTo run was not found in the file from the TT run. Please make sure that the input files used for this TTo are exactly the same as were used in TT.")
+            sys.exit(1)
+        if file_TT and TT_dict[chrom][1] != comparison[chrom][1]:
+            print("Error: the windows from this TTo run and in the file from the TT run were not the same. Please make sure that the input files used for this TTo are exacctly the same as were used in TT.")
+            sys.exit(1)
         # First list for each chromosome are the counts
         outgroup_counts.extend(comparison[chrom][0])
         if print_counts:
@@ -135,4 +163,3 @@ for comparison in results_outgroup:
             for i in range(len(comparison[chrom][0])):
                 outgroup_count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
 if print_counts: outgroup_count_file.close()
-
