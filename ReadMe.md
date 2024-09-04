@@ -7,11 +7,13 @@ This repository contains guidelines and scripts for running the TT method for es
 ---------------------------------------------------------
 ## Setup and Data Formatting
 
-The directory 'Pipeline' contains all the scripts necessary to run both the TT and the TTO method. Users should download all scripts to a suitable location.
+The directory 'Pipeline' contains all the scripts necessary to run both the TT and the TTO method. Users should download all scripts to a suitable location. Please see the next section on running the scripts. 
 
-Genomes for the two population, and the outgroup for TTO, should be in VCF format. The method requires genotype data 
+Genomes for the two populations, and the outgroup for TTO, should be in VCF format. The method requires genotype data and depth data for each position and will disregard any sites missing those fields in the VCF. The thresholds to consider "good depth" can be easily changed by the user. Errors due to formatting assumptions have been written to be as informative as possible, but note that most issues arise from formatting. All VCF files should be zipped.
 
-Both TT and TTO methods require the ancestral states at all positions in the genome. An example of such files created for the human genome based on consensus among three species of apes can be found at the zenodo DOI below. The TT & TTO methods consider a particular position informative only when the ancestral state has consensus support among all three of Gorilla, Chimpanzee and Orangutan. If intending to estimate divergence times for human populations, the files in 'Ancestral_states.zip' can be downloaded and used (without decompressing). To estimate divergence times for other species, the user will need to create their own ancestral state files of similar format, (one '.txt' file per chromosome, one line per site, for all sites in the genome).
+Both TT and TTO methods require the ancestral states at all positions in the genome. The scripts expect a zipped .txt file with two columns: 
+
+An example of such files created for the human genome based on consensus among three species of apes can be found at the zenodo DOI below. The TT & TTO methods consider a particular position informative only when the ancestral state has consensus support among all three of Gorilla, Chimpanzee and Orangutan. If intending to estimate divergence times for human populations, the files in 'Ancestral_states.zip' can be downloaded and used (without decompressing). To estimate divergence times for other species, the user will need to create their own ancestral state files of similar format, (one '.txt' file per chromosome, one line per site, for all sites in the genome).
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4441887.svg)](https://doi.org/10.5281/zenodo.4441887)
 
 ---------------------------------------------------------
