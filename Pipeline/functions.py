@@ -179,15 +179,23 @@ def get_counts_vcf_TT(iterable):
                             out_dict[current_chrom][1].append((win_start, current_pos))
                         local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                         window_step = 0
-                    # If at the start of a new window, note the starting position
-                    if window_step == 0:
                         win_start = pos_1
+                    # If a position in the file is skipped, this while loop will increse the steps of the window to account for them in the genome, and update the window if it reaches the end
+                    while pos_1 - win_start != window_step:
+                        window_step += 1
+                        if window_step >= window_size:
+                            if not local_count: local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                            out_dict[chrom_1][0].append(local_count)
+                            out_dict[chrom_1][1].append((win_start, win_start+window_size-1))
+                            local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                            window_step = 0
+                            win_start += window_size
                     # If at the end of a window, update output directories and start a new window
                     if window_step >= window_size:
                         out_dict[chrom_1][0].append(local_count)
+                        out_dict[chrom_1][1].append((win_start, current_pos))
                         local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                         window_step = 0
-                        out_dict[chrom_1][1].append((win_start, current_pos))
                         win_start = pos_1
                     # To keep track of the previous chromosome and position for updating the directories correctly
                     current_chrom = chrom_1
@@ -336,10 +344,16 @@ def get_counts_vcf_TTo(iterable):
                             local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                             window_step = 0
                             win_start = pos_1
-                    
-                        if window_step == 0:
-                            win_start = pos_1
-
+                        # If a position in the file is skipped, this while loop will increse the steps of the window to account for them in the genome, and update the window if it reaches the end
+                        while pos_1 - win_start != window_step:
+                            window_step += 1
+                            if window_step >= window_size:
+                                if not local_count: local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                                out_dict[chrom_1][0].append(local_count)
+                                out_dict[chrom_1][1].append((win_start, win_start+window_size-1))
+                                local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                                window_step = 0
+                                win_start += window_size
                         if window_step >= window_size:
                             out_dict[chrom_1][0].append(local_count)
                             local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -465,7 +479,28 @@ def get_estimates_vcf_TT(count_list):
     '''Function to obtain all parameter estimates and wbj statistics for TT method. Observed parameters for whole genome is calculated, then local parameters per window are calcualted, and both used to obtian wbj estimates. 
     Input: List of count lists per window, will be in order of chromosome but that information is not needed
     Output: a list containing lists for each parameter of observed parameter values, wbj mean and wbj variance.'''
-    l_alfa1 = l_alfa2 = l_thetaA = l_mu_t1 = l_mu_t2 = l_mu_nu1 = l_mu_nu2 = l_mu_diff_t1_t2 = l_drift1 = l_drift2 = l_theta1 = l_theta2 = l_W1ratio = l_W2ratio = l_D1 = l_D2 = l_P1 = l_P2 = l_P1_time = l_P2_time = l_Fst = num_sites = []
+    l_alfa1 = []
+    l_alfa2 = []
+    l_thetaA = []
+    l_mu_t1 = []
+    l_mu_t2 = []
+    l_mu_nu1 = []
+    l_mu_nu2 = []
+    l_mu_diff_t1_t2 = []
+    l_drift1 = []
+    l_drift2 = []
+    l_theta1 = []
+    l_theta2 = []
+    l_W1ratio = []
+    l_W2ratio = []
+    l_D1 = []
+    l_D2 = []
+    l_P1 = []
+    l_P2 = []
+    l_P1_time = []
+    l_P2_time = []
+    l_Fst = []
+    num_sites = []
     g=0
     n=0
     obs_d = [0 for i in range(9)]
@@ -600,7 +635,27 @@ def get_estimates_vcf_TTo(count_list, outgroup_count_list):
     '''Function to obtain all parameter estimates and wbj statistics for TTo method. How does this work?
     Input: List of count lists per window, will be in order of chromosome but that information is not needed, list of outgroup count lists, the same order
     Output: a list containing lists for each parameter of observed parameter values, wbj mean and wbj variance.'''
-    l_alfa1 = l_alfa2 = l_test1 = l_test2 = l_y = l_tau2_1 = l_tau2_2 = l_tau3_1 = l_tau3_2 = l_B1 = l_B2 = l_U1 = l_U2 = l_V1 = l_V2 = l_tau_test = l_T1 = l_T2 = l_J1 = l_J2 = num_sites = []
+    l_alfa1 = []
+    l_alfa2 = []
+    l_test1 = []
+    l_test2 = []
+    l_y = []
+    l_tau2_1 = []
+    l_tau2_2 = []
+    l_tau3_1 = []
+    l_tau3_2 = []
+    l_B1 = []
+    l_B2 = []
+    l_U1 = []
+    l_U2 = []
+    l_V1 = []
+    l_V2 = []
+    l_tau_test = []
+    l_T1 = []
+    l_T2 = []
+    l_J1 = []
+    l_J2 = []
+    num_sites = []
     g=0
     n=0
     obs_d = [0 for i in range(9)]
