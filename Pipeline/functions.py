@@ -540,14 +540,6 @@ def get_estimates_vcf_TT(count_list):
 
 def get_cond_estimates(counts):
     n1, n2, n3, n4, n5, n6, n7 = counts[1:8]
-    # TESTING FOR THE LOVE OF GOD
-    if n1 == 0: n1 = 1
-    if n2 == 0: n2 = 1
-    if n3 == 0: n3 = 1
-    if n4 == 0: n4 = 1
-    if n5 == 0: n5 = 1
-    if n6 == 0: n6 = 1
-    if n7 == 0: n7 = 1
     n_tot = 1.0*sum(counts)
     alfa1=1.0*(n1+n7+n5)/(n1+2.0*n3+n6+0.5*n6)
     alfa2=1.0*(n2+n6+n5)/(n2+2.0*n4+n7+0.5*n5)
@@ -562,14 +554,6 @@ def estimate_param_TTo(counts, outgroup_counts):
     Output: list of all the different parameters'''
     [alfa1,alfa2,test1,test2]=get_cond_estimates(outgroup_counts)
     n1, n2, n3, n4, n5, n6, n7 = counts[1:8]
-    # TESTING FOR THE LOVE OF GOD
-    if n1 == 0: n1 = 1
-    if n2 == 0: n2 = 1
-    if n3 == 0: n3 = 1
-    if n4 == 0: n4 = 1
-    if n5 == 0: n5 = 1
-    if n6 == 0: n6 = 1
-    if n7 == 0: n7 = 1
     n_tot=1.0*sum(counts)
     if alfa1*alfa2>0:
         y=(9.0*n5)/(n_tot*2.0*alfa1*alfa2)
@@ -620,7 +604,7 @@ def get_estimates_vcf_TTo(count_list, outgroup_count_list):
     g=0
     n=0
     obs_d = [0 for i in range(9)]
-    obd_cond_d = [0 for i in range(9)]
+    obs_cond_d = [0 for i in range(9)]
     obs_d = [sum(count_window) for count_window in zip(*count_list)]
     obs_cond_d = [sum(count_window) for count_window in zip(*outgroup_count_list)]
     try:
