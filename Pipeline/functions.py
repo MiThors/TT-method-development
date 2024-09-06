@@ -179,7 +179,7 @@ def get_counts_vcf_TT(iterable):
                             out_dict[current_chrom][1].append((win_start, current_pos))
                         local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                         window_step = 0
-                        win_start = pos_1
+                        win_start = 0
                     # If a position in the file is skipped, this while loop will increse the steps of the window to account for them in the genome, and update the window if it reaches the end
                     while pos_1 - win_start != window_step:
                         window_step += 1
@@ -343,7 +343,7 @@ def get_counts_vcf_TTo(iterable):
                                 out_dict[current_chrom][1].append((win_start, current_pos))
                             local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                             window_step = 0
-                            win_start = pos_1
+                            win_start = 0
                         # If a position in the file is skipped, this while loop will increse the steps of the window to account for them in the genome, and update the window if it reaches the end
                         while pos_1 - win_start != window_step:
                             window_step += 1
