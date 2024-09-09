@@ -96,36 +96,19 @@ counts_dict = {}
 # For vcf filetype
 if file_type == 'vcf': 
     # Create iterable list with all input parameters for counting
-    if not file_TT: iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
-    iterables_outgroup = [[files_pop1[i], files_pop2[i], files_outgroup[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
-    # To avoid infinite recursion
+    iterables = [[files_pop1[i], files_pop2[i], files_outgroup[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size, file_TT] for i in range(file_tot)]
+    # To avoid infinite recursion (see multiprocessing documentation)
     if __name__ == '__main__':
         with multiprocessing.Pool() as pool:
             # Computes for files in parallel using CPU cores available to user
-            if not file_TT: results = pool.map(functions.get_counts_vcf_TT, iterables)
-            results_outgroup = pool.map(functions.get_counts_vcf_TTo, iterables_outgroup)
+            results = pool.map(functions.get_counts_vcf_TT_and_TTo, iterables)
         pool.close()
 
-# From TT results get a list of the counts and if user selected, print the counts by chromosome and window and output to file
+# Initialise the lists that will contain all the counts per window, the ones which have and have not been conditioned on the outgroup
 counts = []
 outgroup_counts = []
-if print_counts:
-    if not file_TT: count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
-    outgroup_count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TTo_Counts.txt", 'w')
-# Comparison being one group of files if multiple were submitted
-if not file_TT:
-    for comparison in results:
-        for chrom in comparison:
-            # First list for each chromosome are the counts
-            counts.extend(comparison[chrom][0])
-            if print_counts:
-                count_file.write("#" + chrom + "\n")
-                # The second list contains the window positions
-                for i in range(len(comparison[chrom][0])):
-                    count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
-    if print_counts: count_file.close()
 
-# Same is done for the TTo counts and if TT counts, chromosomes are compared
+# First grab TT counts from the file if one was provided
 if file_TT:
     with open('TT_out_pop1_pop2/DSub100NSub100_TT_Counts.txt','rt',encoding='utf-8') as TT_counts:
         l = TT_counts.readline()
@@ -147,21 +130,31 @@ if file_TT:
             l = TT_counts.readline()
     TT_counts.close()
   
-for comparison in results_outgroup:
-    for chrom in comparison:
+# Then loop through the results to obtain the TTo counts, and possibly the TT, printing the counts to a file if necessary
+if print_counts:
+    if not file_TT: count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
+    outgroup_count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TTo_Counts.txt", 'w')
+# Comparison being one group of files if multiple were submitted
+for single_result in results:
+    for chrom in single_result[0]:
         if file_TT and chrom not in TT_dict: 
             print("Error: a chromosome generated from this TTo run was not found in the file from the TT run. Please make sure that the input files used for this TTo are exactly the same as were used in TT.")
             sys.exit(1)
-        if file_TT and TT_dict[chrom][1] != comparison[chrom][1]:
+        elif file_TT and TT_dict[chrom][1] != single_result[0][chrom][1]:
             print("Error: the windows from this TTo run and in the file from the TT run were not the same. Please make sure that the input files used for this TTo are exacctly the same as were used in TT.")
             sys.exit(1)
         # First list for each chromosome are the counts
-        outgroup_counts.extend(comparison[chrom][0])
+        outgroup_counts.extend(single_result[0][chrom][0])
+        if not file_TT:
+            counts.extend(single_result[1][chrom][0])
         if print_counts:
             outgroup_count_file.write("#" + chrom + "\n")
+            if not file_TT: count_file.write("#" + chrom + "\n")
             # The second list contains the window positions
-            for i in range(len(comparison[chrom][0])):
-                outgroup_count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
+            for i in range(len(single_result[0][chrom][0])):
+                outgroup_count_file.write(str(single_result[0][chrom][1][i]) + "\t" + str(single_result[0][chrom][0][i]) + "\n")
+                if not file_TT: count_file.write(str(single_result[1][chrom][1][i]) + "\t" + str(single_result[1][chrom][0][i]) + "\n")
+if print_counts: count_file.close()
 if print_counts: outgroup_count_file.close()
 
 [alfa1,alfa2,test1,test2,y,tau2_1,tau2_2,tau3_1,tau3_2,B1,B2,U1,U2,V1,V2,tau_test,T1,T2,J1,J2,m_counts] = functions.get_estimates_vcf_TTo(counts, outgroup_counts)
