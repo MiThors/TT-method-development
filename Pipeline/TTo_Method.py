@@ -58,7 +58,7 @@ parser.add_argument("-c", "--counts",
                     help = "output a file with all counts per chromosome per window")
 parser.add_argument("-w", "--window",
                     default = "5000000",
-                    help = "set the window size for calculating local parameters")
+                    help = "set the window size for calculating local parameters, default is 5000000 which correspends to about 5 cM")
 # REMOVE --test: for testing purposes only
 parser.add_argument("--test", action = "store_true")
 args = parser.parse_args()
