@@ -11,7 +11,6 @@ import argparse
 import os
 import multiprocessing
 import sys
-from mpi4py import MPI
 
 # Filtering parameters that can be changed by the user
 # These represent what you consider low and high coverage for a genotype position, as an int
