@@ -34,10 +34,6 @@ parser.add_argument("-og", "--outgroup",
                     required = True,
                     nargs = '+',
                     help = "genotype files for the outgroup population")
-parser.add_argument("-t", "--type", 
-                    required = True, 
-                    choices = ['vcf', 'tped', 'bam'], 
-                    help = "type of genotype files input")
 parser.add_argument("-a", "--ancestral",  
                     required = True,
                     nargs = '+',
@@ -59,15 +55,12 @@ parser.add_argument("-c", "--counts",
 parser.add_argument("-w", "--window",
                     default = "5000000",
                     help = "set the window size for calculating local parameters, default is 5000000 which correspends to about 5 cM")
-# REMOVE --test: for testing purposes only
-parser.add_argument("--test", action = "store_true")
 args = parser.parse_args()
 
 # Turn args into informatively named variables
 files_pop1 = args.pop1
 files_pop2 = args.pop2
 files_outgroup = args.outgroup
-file_type = args.type
 files_anc = args.ancestral
 file_TT = args.TTCounts
 pop1_key = args.keywords[0] 
@@ -88,21 +81,20 @@ if any(len(lst) != file_tot for lst in [files_pop2, files_outgroup, files_anc]):
     sys.exit(1)
 
 # Make output dir, will complain if it already exists, which is why this is so early in the script
-if not args.test: os.mkdir(out_dir)
+os.mkdir(out_dir)
 
 # Initialise the directory with all the counts per chromosome
 counts_dict = {}
 
 # For vcf filetype
-if file_type == 'vcf': 
-    # Create iterable list with all input parameters for counting
-    iterables = [[files_pop1[i], files_pop2[i], files_outgroup[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size, file_TT] for i in range(file_tot)]
-    # To avoid infinite recursion (see multiprocessing documentation)
-    if __name__ == '__main__':
-        with multiprocessing.Pool() as pool:
-            # Computes for files in parallel using CPU cores available to user
-            results = pool.map(functions.get_counts_vcf_TT_and_TTo, iterables)
-        pool.close()
+# Create iterable list with all input parameters for counting
+iterables = [[files_pop1[i], files_pop2[i], files_outgroup[i], files_anc[i], low_coverage, high_coverage,vcf_filters, win_size, file_TT] for i in range(file_tot)]
+# To avoid infinite recursion (see multiprocessing documentation)
+if __name__ == '__main__':
+    with multiprocessing.Pool() as pool:
+        # Computes for files in parallel using CPU cores available to user
+        results = pool.map(functions.get_counts_TT_and_TTo, iterables)
+    pool.close()
 
 # Initialise the lists that will contain all the counts per window, the ones which have and have not been conditioned on the outgroup
 counts = []
@@ -157,7 +149,7 @@ for single_result in results:
 if print_counts: count_file.close()
 if print_counts: outgroup_count_file.close()
 
-[alfa1,alfa2,test1,test2,y,tau2_1,tau2_2,tau3_1,tau3_2,B1,B2,U1,U2,V1,V2,tau_test,T1,T2,J1,J2,m_counts] = functions.get_estimates_vcf_TTo(counts, outgroup_counts)
+[alfa1,alfa2,test1,test2,y,tau2_1,tau2_2,tau3_1,tau3_2,B1,B2,U1,U2,V1,V2,tau_test,T1,T2,J1,J2,m_counts] = functions.get_estimates_TTo(counts, outgroup_counts)
 
 # Open all output files, print the header and estimates, close all output files
 alfa1_out=open(out_dir+'/alfa1_cond.res','w')

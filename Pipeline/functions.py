@@ -91,7 +91,7 @@ def get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1,
         sys.exit(1)
 
 
-def get_counts_vcf_TT(iterable):
+def get_counts_TT(iterable):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
     Input:
     pop1, pop2, anc = filepaths for all files, list of one or more
@@ -242,7 +242,7 @@ def get_counts_vcf_TT(iterable):
         print(f"Error: It seems that every position in files {pop1} and {pop2} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
 
-def get_counts_vcf_TT_and_TTo(iterable):
+def get_counts_TT_and_TTo(iterable):
     '''Function for getting counts from a vcf file for the TTo method, TT counts are included if no TT count file was given. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
     pop1, pop2, outgroup, anc = filepaths for all files, list of one or more
     low_cov, high_cov = coverage thresholds for filtering, set up in main method file
@@ -449,8 +449,6 @@ def get_counts_vcf_TT_and_TTo(iterable):
 
 
 
-
-
 def estimate_param_TT(counts):
     '''Function for estimating the parameters of the model for TT counts. Methods and math are not mine (Milo), see the original TT paper for more information (on the github page).
     Input: list of counts for each of the eight scenarios for either the entire genome (observed) or just one window (local)
@@ -526,7 +524,7 @@ def estimate_param_TT(counts):
     ##
     return [alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_t1_t2_diff,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst]
 
-def get_estimates_vcf_TT(count_list):
+def get_estimates_TT(count_list):
     '''Function to obtain all parameter estimates and wbj statistics for TT method. Observed parameters for whole genome is calculated, then local parameters per window are calcualted, and both used to obtian wbj estimates. 
     Input: List of count lists per window, will be in order of chromosome but that information is not needed
     Output: a list containing lists for each parameter of observed parameter values, wbj mean and wbj variance.'''
@@ -682,7 +680,7 @@ def estimate_param_TTo(counts, outgroup_counts):
 
     return [alfa1,alfa2,test1,test2,y,tau2_1,tau2_2,tau3_1,tau3_2,B1,B2,U1,U2,V1,V2,tau_test,T1,T2,J1,J2]
 
-def get_estimates_vcf_TTo(count_list, outgroup_count_list):
+def get_estimates_TTo(count_list, outgroup_count_list):
     '''Function to obtain all parameter estimates and wbj statistics for TTo method. How does this work?
     Input: List of count lists per window, will be in order of chromosome but that information is not needed, list of outgroup count lists, the same order
     Output: a list containing lists for each parameter of observed parameter values, wbj mean and wbj variance.'''

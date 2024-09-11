@@ -11,6 +11,7 @@ import argparse
 import os
 import multiprocessing
 import sys
+from mpi4py import MPI
 
 # Filtering parameters that can be changed by the user
 # These represent what you consider low and high coverage for a genotype position, as an int
@@ -30,10 +31,6 @@ parser.add_argument("-2", "--pop2",
                     required = True,
                     nargs = '+',
                     help = "genotype files for the second population")
-parser.add_argument("-t", "--type", 
-                    required = True, 
-                    choices = ['vcf', 'tped', 'bam'], 
-                    help = "type of genotype files input")
 parser.add_argument("-a", "--ancestral",  
                     required = True,
                     nargs = '+',
@@ -51,15 +48,12 @@ parser.add_argument("-c", "--counts",
 parser.add_argument("-w", "--window", 
                     default = "5000000",
                     help = "set the window size for calculating local parameters, default is 5000000 which correspends to about 5 cM")
-# REMOVE --test: for testing purposes only
-parser.add_argument("--test", action = "store_true")
 
 args = parser.parse_args()
 
 # Turn args into informatively named variables
 files_pop1 = args.pop1
 files_pop2 = args.pop2
-file_type = args.type
 files_anc = args.ancestral
 pop1_key = args.keywords[0]
 pop2_key = args.keywords[1]
@@ -77,17 +71,17 @@ if any(len(lst) != file_tot for lst in [files_pop2, files_anc]):
     sys.exit(1)
 
 # Make output dir, will complain if it already exists, which is why this is so early in the script
-if not args.test: os.mkdir(out_dir)
+os.mkdir(out_dir)
 
-if file_type == 'vcf': 
-    # Create iterable list for each set of files with all input parameters for multicore counting
-    iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size] for i in range(file_tot)]
-    # To avoid infinite recursion
-    if __name__ == '__main__':
-        with multiprocessing.Pool() as pool:
-            # Computes for files in parallel using CPU cores available to user
-            results = pool.map(functions.get_counts_vcf_TT, iterables)
-        pool.close()
+
+# Create iterable list for each set of files with all input parameters for multicore counting
+iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size]for i in range(file_tot)]
+# To avoid infinite recursion
+if __name__ == '__main__':
+    with multiprocessing.Pool() as pool:
+        # Computes for files in parallel using CPU cores available to user
+        results = pool.map(functions.get_counts_TT, iterables)
+    pool.close()
     
 # Combine results into a single dictionary of the counts and if user selected, print the counts by chromosome and window and output to file
 counts = []
@@ -105,7 +99,7 @@ for comparison in results:
 if print_counts: count_file.close()
 
 # Obtain estiamtes of the model parameters using the counts. For each parameter is the observed mean from all counts, the wbj mean and the wbj variance
-[alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_diff_t1_t2,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst] = functions.get_estimates_vcf_TT(counts)
+[alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_diff_t1_t2,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst] = functions.get_estimates_TT(counts)
 
 # Open all output files, print the header and estimates, close all output files
 alfa1_out=open(out_dir+'/alfa1.res','w')
