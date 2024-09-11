@@ -1,16 +1,21 @@
 # The TT and TTo Methods
-This repository contains guidelines and scripts for running the TT method for estimating divergence times between populations. This quick and transparent method requires two haploid genomes (or a single diploid genome) from each of the two populations, and the ancestral state for their common ancestor. Optionally, an additional two haploid genomes (or a single diploid genome) can be included, one that shares the same ancestral states but diverged earlier than the split between the study populations. This additional genome is referred to as the outgroup, and the method as TT-Outgroup, or TTO. Please see the published paper for full details (reference at the bottom). 
+This repository contains guidelines and scripts for running the TT method for estimating divergence times between populations. This quick and transparent method requires two haploid genomes (or a single diploid genome) from each of the two populations, and the ancestral state for their common ancestor. Optionally, an additional two haploid genomes (or a single diploid genome) can be included, one that shares the same ancestral states but diverged earlier than the split being investigated to condition the method. This additional genome is referred to as the Outgroup, and the method as TT-outgroup, or TTo. Please see the [published paper for full details](#references). 
 
 ## TT Arguments
--1 --pop1: intakes one or more strings, the file path to the vcf(s) for the individual from population 1. 
+-1 --pop1: intakes one or more strings, the file path to the vcf(s) for the diploid individual from population 1. Required.
 
--2 --pop2: intakes one or more stirngs, the file path to the vcf(s) for the individual from population 2.  
+-2 --pop2: intakes one or more stirngs, the file path to the vcf(s) for the diploid individual from population 2. Required. 
 
--a --ancestral: intakes 1 string, ancestral states file (with path).
+-a --ancestral: intakes one or more strings, the file path to the ancestral states file. Information on how to generate these is found [below](#creating-ancestral-state-files). Required.
 
--k --keywords: optional, intakes 2 strings, keywords for the individuals (MUST be in the same order as in -f), default = "ind1" "ind2".
+-k --keywords: intakes two strings, keywords for the individuals, and should be in the same order as the input parameters. Optional, and defaults to "pop1" and "pop2". 
 
--o --out: optional, intakes 1 string, a user-given name for the output directory. Default "TT_out_ind1_ind2".
+-o --out: intakes one string, the name for the output directory. Optional, defaults "TT_out_pop1_pop2". 
+
+-w, --window: intakes one int, the window size for weighted-block jackknife. Optional, default is 5,000,000 which corresponds to about 5cm. 
+
+-c --counts: flag to print counts per chromosome per window to a counts file in the output directory. Optional, can be used for inspecting when errors during calculations happens, or when results of calculations look strange.
+
 
 ## TTo Arguments
 -i --in: intakes 3 strings, genotype file (with path) for the two individuals and the outgroup (MUST be in that order). Assumes files are separated by chromosome, see -C if not. 
