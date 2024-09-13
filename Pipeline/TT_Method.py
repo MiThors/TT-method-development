@@ -13,9 +13,6 @@ import multiprocessing
 import sys
 
 # Filtering parameters that can be changed by the user
-# These represent what you consider low and high coverage for a genotype position, as an int
-low_coverage = 10
-high_coverage = 500
 # All acceptable values in the FILTERS column of a vcf file, default set to be passing all filters or a non-entry
 vcf_filters = ['PASS','.']
 
@@ -44,8 +41,14 @@ parser.add_argument("-o", "--out",
 parser.add_argument("-c", "--counts", 
                     action="store_true",
                     help = "output a file with all counts per chromosome per window")
+parser.add_argument("-d", "--depth_thresholds",
+                    required = True,
+                    nargs = 2,
+                    type = int,
+                    help = "user should define what is too low and too high depth for their given genomes, as it varies greatly sample to sample")
 parser.add_argument("-w", "--window", 
-                    default = "5000000",
+                    default = 5000000,
+                    type = int,
                     help = "set the window size for calculating local parameters, default is 5000000 which correspends to about 5 cM")
 
 args = parser.parse_args()
@@ -58,6 +61,7 @@ pop1_key = args.keywords[0]
 pop2_key = args.keywords[1]
 out_dir = args.out
 print_counts = args.counts
+high_coverage, low_coverage = args.depth_thresholds
 win_size = args.window
 
 # Check that filepaths are the same lengths

@@ -107,7 +107,7 @@ def get_counts_TT(iterable):
     low_cov = iterable[3]
     high_cov = iterable[4]
     filters = iterable[5]
-    window_size = int(iterable[6])
+    window_size = iterable[6]
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
     window_step = 0
@@ -256,7 +256,7 @@ def get_counts_TT_and_TTo(iterable):
     low_cov = iterable[4]
     high_cov = iterable[5]
     filters = iterable[6]
-    window_size = int(iterable[7])
+    window_size = iterable[7]
     if iterable[8]: count_TT = False
     else: count_TT = True
     nucl = ['A','C','G','T']

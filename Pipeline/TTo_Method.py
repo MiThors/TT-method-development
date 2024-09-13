@@ -52,6 +52,11 @@ parser.add_argument("-o", "--out",
 parser.add_argument("-c", "--counts",
                     action="store_true",
                     help = "output a file with all counts per chromosome per window")
+parser.add_argument("-d", "--depth_thresholds",
+                    required = True,
+                    nargs = 2,
+                    type = int,
+                    help = "user should define what is too low and too high depth for their given genomes, as it varies greatly sample to sample")
 parser.add_argument("-w", "--window",
                     default = "5000000",
                     help = "set the window size for calculating local parameters, default is 5000000 which correspends to about 5 cM")
