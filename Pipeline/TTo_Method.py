@@ -70,6 +70,7 @@ pop2_key = args.keywords[1]
 outg_key = args.keywords[2]
 out_dir = args.out
 print_counts = args.counts
+low_coverage, high_coverage = args.depth_thresholds
 win_size = args.window
 
 # Check that filepaths are the same lengths
