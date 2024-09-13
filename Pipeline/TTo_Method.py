@@ -13,9 +13,6 @@ import multiprocessing
 import sys
 
 # Filtering parameters that can be changed by the user
-# These represent what you consider low and high coverage for a genotype position, as an int
-low_coverage = 10
-high_coverage = 500
 # All acceptable values in the FILTERS column of a vcf file, default set to be passing all filters or a non-entry
 vcf_filters = ['PASS','.']
 
