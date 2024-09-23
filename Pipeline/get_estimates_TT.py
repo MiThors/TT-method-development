@@ -1,6 +1,9 @@
 import os
 import wbj
 from math import log
+import time
+
+t0 = time.time()
 
 def sum_over_all_nt(a_d):
 	m0=0
@@ -356,3 +359,7 @@ P2_out.close()
 P1_time_out.close()
 P2_time_out.close()
 Fst_out.close()
+
+t1 = time.time()
+total_time = t1-t0
+print(f'Total time for running get esitmates TT from initialising the python script: {total_time}')

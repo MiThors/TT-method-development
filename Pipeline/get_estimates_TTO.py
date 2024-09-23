@@ -2,6 +2,9 @@ import os
 import sys
 import wbj
 from math import log
+import time
+
+t0 = time.time()
 
 
 def make_string(a_l):
@@ -408,3 +411,7 @@ J1_out.close()
 J2_out.close()
 
 m_counts_out.close()
+
+t1 = time.time()
+total_time = t1-t0
+print(f'Total time for running get esitmates TTo from initialising the python script: {total_time}')

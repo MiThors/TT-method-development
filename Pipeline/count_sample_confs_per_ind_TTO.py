@@ -1,6 +1,9 @@
 import sys
 import gzip
 from zipfile import ZipFile
+import time
+
+t0 = time.time()
 
 def get_var_form(a_list):
     for x in a_list:
@@ -277,4 +280,6 @@ for a_tuple in sorted(out_dict.keys()):
     outf.write(out_str+'\n')
 outf.close()
 
-
+t1 = time.time()
+total_time = t1-t0
+print(f'Total time for running count sample confs TT from initialising the python script: {total_time}')
