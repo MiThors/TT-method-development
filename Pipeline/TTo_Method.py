@@ -11,6 +11,9 @@ import argparse
 import os
 import multiprocessing
 import sys
+import time
+
+t0 = time.time()
 
 # Filtering parameters that can be changed by the user
 # All acceptable values in the FILTERS column of a vcf file, default set to be passing all filters or a non-entry
@@ -92,12 +95,18 @@ counts_dict = {}
 # For vcf filetype
 # Create iterable list with all input parameters for counting
 iterables = [[files_pop1[i], files_pop2[i], files_outgroup[i], files_anc[i], low_coverage, high_coverage,vcf_filters, win_size, file_TT] for i in range(file_tot)]
+
+print("Starting TTo Counting")
+print()
 # To avoid infinite recursion (see multiprocessing documentation)
 if __name__ == '__main__':
     with multiprocessing.Pool() as pool:
         # Computes for files in parallel using CPU cores available to user
         results = pool.map(functions.get_counts_TT_and_TTo, iterables)
     pool.close()
+
+print("TTo Counting Complete, combining counts.")
+print()
 
 # Initialise the lists that will contain all the counts per window, the ones which have and have not been conditioned on the outgroup
 counts = []
@@ -151,6 +160,9 @@ for single_result in results:
                 if not file_TT: count_file.write(str(single_result[1][chrom][1][i]) + "\t" + str(single_result[1][chrom][0][i]) + "\n")
 if print_counts: count_file.close()
 if print_counts: outgroup_count_file.close()
+
+print("TTo counts combined, estimating parameters.")
+print()
 
 [alfa1,alfa2,test1,test2,y,tau2_1,tau2_2,tau3_1,tau3_2,B1,B2,U1,U2,V1,V2,tau_test,T1,T2,J1,J2,m_counts] = functions.get_estimates_TTo(counts, outgroup_counts)
 
@@ -222,3 +234,7 @@ T2_out.close()
 J1_out.close()
 J2_out.close()
 m_counts_out.close()
+
+t1 = time.time()
+total_time = t1-t0
+print(f'Total time for running TTo method from initialising the python script: {total_time}')

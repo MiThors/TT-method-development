@@ -104,10 +104,10 @@ def get_counts_TT(iterable):
     pop1 = iterable[0]
     pop2 = iterable[1]
     anc = iterable[2]
-    low_cov = iterable[3]
-    high_cov = iterable[4]
+    low_cov = int(iterable[3])
+    high_cov = int(iterable[4])
     filters = iterable[5]
-    window_size = iterable[6]
+    window_size = int(iterable[6])
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
     window_step = 0
@@ -166,7 +166,11 @@ def get_counts_TT(iterable):
                             la = ancestral.readline().strip().split()
                             if la: pos_A = int(la[pos_A_ind])
                             else: break
-                    # Check to make sure the positions are all the same and throw and error that they never managed to align
+                    # Check for end of file, then to make sure the positions are all the same and throw and error that they never managed to align
+                    if not l1 or not l2 or not la: 
+                        if local_count: out_dict[current_chrom][0].append(local_count)
+                        out_dict[current_chrom][1].append((win_start, current_pos))
+                        break
                     if not pos_1 == pos_2 == pos_A: 
                         print(f"Error: Files never managed to be reach at the same position, {anc} ended at {pos_A}, {pop1} at {pos_1}, and {pop2} at {pos_2}. Please check that correct files are being compared, or file formatting.")
                         sys.exit(1)
@@ -253,10 +257,10 @@ def get_counts_TT_and_TTo(iterable):
     pop2 = iterable[1]
     outgroup = iterable[2]
     anc = iterable[3]
-    low_cov = iterable[4]
-    high_cov = iterable[5]
+    low_cov = int(iterable[4])
+    high_cov = int(iterable[5])
     filters = iterable[6]
-    window_size = iterable[7]
+    window_size = int(iterable[7])
     if iterable[8]: count_TT = False
     else: count_TT = True
     nucl = ['A','C','G','T']
@@ -335,6 +339,15 @@ def get_counts_TT_and_TTo(iterable):
                                 la = ancestral.readline().strip().split()
                                 if la: pos_A = int(la[pos_A_ind])
                                 else: break
+                        # Check for end of file
+                        if not l1 or not l2 or not la or not lo: 
+                            if local_count:
+                                out_dict[current_chrom][0].append(local_count)
+                                out_dict[current_chrom][1].append((win_start, current_pos))
+                                if count_TT:
+                                    out_dict_TT[current_chrom][0].append(local_count_TT)
+                                    out_dict_TT[current_chrom][1].append((win_start, current_pos))
+                            break
                         # Check to make sure the positions are all the same. 
                         if not pos_1 == pos_2 == pos_A == pos_OG: 
                             print(f"Error: Files never managed to be reach at the same position, {anc} ended at {pos_A}, {pop1} at {pos_1}, {pop2} at {pos_2} and {outgroup} at {pos_OG}. Please check that correct files are  being compared, or file formatting.")
