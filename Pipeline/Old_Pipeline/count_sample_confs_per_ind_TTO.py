@@ -4,6 +4,7 @@ from zipfile import ZipFile
 import time
 
 t0 = time.time()
+print(f'Timing started, script started')
 
 def get_var_form(a_list):
     for x in a_list:
@@ -117,8 +118,8 @@ def make_out_str(a_list):
 
 
 ######### User should edit file paths below to point to ancestral state files and vcfs #############
-ancPath='/proj/ancestral_states'
-vcf_path='/proj/allsite_vcfs'
+ancPath='/proj/human_evolution_msc/private/Milo/09_Windows/00_Data/Ancestral_states.zip'
+vcf_path='/home/thors/2024_DP/'
 ####################################################################################################
 
 arg_list=sys.argv
@@ -126,25 +127,18 @@ the_chr=arg_list[1]
 ind1=arg_list[2]
 ind2=arg_list[3]
 outgrp=arg_list[4]
+window=arg_list[5]
 
 ##########################
 ##########################
 
 # Get file name function to use ind1 ind2 etc and for outgroup
-outPATH='DIR_counts_per_5cm_TTO_'+outgrp
+outPATH='/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_counts_per_5cm_TTo'
 
 file_dict='Dictionary that I removed in a fit of rage'
-vcf_file_one=vcf_path+'/'+file_dict[ind1]
-vcf_fileOne=vcf_file_one.split('.vc')
-vcf_file1=vcf_fileOne[0] + the_chr + '.vc' + vcf_fileOne[1]
-
-vcf_file_two=vcf_path+'/'+file_dict[ind2]
-vcf_fileTwo=vcf_file_two.split('.vc')
-vcf_file2=vcf_fileTwo[0] + the_chr + '.vc' + vcf_fileTwo[1]
-
-Out_grp_vcf=vcf_path+'/'+file_dict[outgrp]
-Outgrp_vcf=Out_grp_vcf.split('.vc')
-outgrp_vcf=Outgrp_vcf[0] + the_chr + '.vc' + Outgrp_vcf[1]
+vcf_file1=ind1
+vcf_file2=ind2
+outgrp_vcf=outgrp
 #sys.exit(outgrp_vcf)
 
 ##########################
@@ -170,11 +164,12 @@ win_end=win_start+win_step
 out_dict={(win_start,win_end):{'A':[0,0,0,0,0,0,0,0,0],'C':[0,0,0,0,0,0,0,0,0],'G':[0,0,0,0,0,0,0,0,0],'T':[0,0,0,0,0,0,0,0,0]}}
 
 
-with ZipFile(ancPath+'/Ancestral_states.zip', 'r') as z:
-    with z.open('Ancestral_states/chr'+the_chr+'.txt','r') as anc_file:
+with ZipFile(ancPath, 'r') as z:
+    with gzip.open('/proj/human_evolution_msc/private/Milo/09_Windows/00_Data/Ancestral_states/chr'+the_chr+'_consensus.txt.gz','r') as anc_file:
         with gzip.open(vcf_file1,'rt',encoding='utf-8') as myf1:
             with gzip.open(vcf_file2,'rt',encoding='utf-8') as myf2:
                 with gzip.open(outgrp_vcf,'rt',encoding='utf-8') as outgrpf:
+                    print(f'All files were opened.')
                     l1='##'
                     while l1[0]=='#':
                         l1=myf1.readline()
@@ -187,6 +182,7 @@ with ZipFile(ancPath+'/Ancestral_states.zip', 'r') as z:
                     while ogrpl[0]=='#':
                         ogrpl=outgrpf.readline()
 
+                    anc_l=anc_file.readline()
                     anc_l=anc_file.readline()
 		
                     while l1 and l2 and ogrpl and anc_l:
@@ -271,7 +267,7 @@ with ZipFile(ancPath+'/Ancestral_states.zip', 'r') as z:
                         ogrpl=outgrpf.readline()
                         anc_l=anc_file.readline()
 
-outf=open(outPATH+'/chr'+the_chr+'_'+ind1+'_vs_'+ind2+'_vs_'+outgrp+'.txt','w')
+outf=open(outPATH+'/chr'+the_chr+'_'+'Finnish'+'_vs_'+'Japanese_vs_Yoruba'+window+'.txt','w')
 
 for a_tuple in sorted(out_dict.keys()):
     out_str=str(a_tuple[0])+','+str(a_tuple[1])

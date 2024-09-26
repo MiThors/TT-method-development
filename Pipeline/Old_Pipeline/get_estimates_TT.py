@@ -37,7 +37,7 @@ def sum_over_all_nt(a_d):
 def get_count_list(file_list):
 	count_list=[]
 	for f in file_list:
-		myf=open('DIR_counts_per_5cm_TT/'+f,'r')
+		myf=open('/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_counts_per_5cm_TT/'+f,'r')
 		for a_l in myf:
 			d=a_l.split()
 			counts=sum_over_all_nt(d[1:])
@@ -238,7 +238,7 @@ def get_branch_name(i1,i2):
 
 ####################
 all_files_dict={}
-temp=os.listdir('DIR_counts_per_5cm_TT')
+temp=os.listdir('/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_counts_per_5cm_TT')
 for x in temp:
 	if x[:len('chr')]=='chr':
 		d=x.split('_')
@@ -259,7 +259,7 @@ for a_tuple in all_files_dict.keys():
 
 ################
 
-outPATH='DIR_estimates_TT'
+outPATH='/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_estimates_TT'
 
 alfa1_out=open(outPATH+'/alfa1.res','w')
 alfa2_out=open(outPATH+'/alfa2.res','w')

@@ -4,6 +4,7 @@ from zipfile import ZipFile
 import time
 
 t0 = time.time()
+print(f'Script initialised, starting TT.')
 
 
 def get_var_form(a_list):
@@ -118,29 +119,23 @@ def make_out_str(a_list):
 
 
 ######### User should edit file paths below to point to ancestral state files and vcfs #############
-ancPath='/proj/ancestral_states'
-vcf_path='/proj/allsite_vcfs'
+ancPath='/proj/human_evolution_msc/private/Milo/09_Windows/00_Data/Ancestral_states.zip'
+vcf_path='$TMPDIR'
 ####################################################################################################
 
 arg_list=sys.argv
 the_chr=arg_list[1]
 ind1=arg_list[2]
 ind2=arg_list[3]
+window=arg_list[4]
 
 ##########################
 ##########################
 
 #Get file name function to use ind1 ind2 etc
-outPATH='DIR_counts_per_5cm_TT'
-
-file_dict='Function I removed whoops, supposed to be the directory of file names.'
-vcf_file_one=vcf_path+'/'+file_dict[ind1]
-vcf_fileOne=vcf_file_one.split('.vc')
-vcf_file1=vcf_fileOne[0] + the_chr + '.vc' + vcf_fileOne[1]
-
-vcf_file_two=vcf_path+'/'+file_dict[ind2]
-vcf_fileTwo=vcf_file_two.split('.vc')
-vcf_file2=vcf_fileTwo[0] + the_chr + '.vc' + vcf_fileTwo[1]
+outPATH='/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_counts_per_5cm_TT'
+vcf_file1=ind1
+vcf_file2=ind2
 
 ##########################
 ##########################
@@ -164,8 +159,8 @@ win_end=win_start+win_step
 out_dict={(win_start,win_end):{'A':[0,0,0,0,0,0,0,0,0],'C':[0,0,0,0,0,0,0,0,0],'G':[0,0,0,0,0,0,0,0,0],'T':[0,0,0,0,0,0,0,0,0]}}
 
 
-with ZipFile(ancPath+'/Ancestral_states.zip', 'r') as z:
-    with z.open('Ancestral_states/chr'+the_chr+'.txt','r') as anc_file:
+with ZipFile(ancPath, 'r') as z:
+    with gzip.open('/proj/human_evolution_msc/private/Milo/09_Windows/00_Data/Ancestral_states/chr'+the_chr+'_consensus.txt.gz','r') as anc_file:
         with gzip.open(vcf_file1,'rt',encoding='utf-8') as myf1:
             with gzip.open(vcf_file2,'rt',encoding='utf-8') as myf2:
                 l1='##'
@@ -174,6 +169,7 @@ with ZipFile(ancPath+'/Ancestral_states.zip', 'r') as z:
                 l2='##'
                 while l2[0]=='#':
                     l2=myf2.readline()
+                anc_l=anc_file.readline()
                 anc_l=anc_file.readline()
                 while l1 and l2 and anc_l:
                     vcf_data1=l1.strip().split()
@@ -248,7 +244,7 @@ with ZipFile(ancPath+'/Ancestral_states.zip', 'r') as z:
                     l2=myf2.readline()
                     anc_l=anc_file.readline()
 
-outf=open(outPATH+'/chr'+the_chr+'_'+ind1+'_vs_'+ind2+'.txt','w')
+outf=open(outPATH+'/chr'+the_chr+'_'+'Finnish'+'_vs_'+'Japanese'+window+'.txt','w')
 
 for a_tuple in sorted(out_dict.keys()):
     out_str=str(a_tuple[0])+','+str(a_tuple[1])

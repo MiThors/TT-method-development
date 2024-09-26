@@ -15,67 +15,66 @@ Both TT and TTO methods require the ancestral states at all positions in the gen
 An example of such files created for the human genome based on consensus among three species of apes can be found at the zenodo DOI below. We consider a particular position informative only when the ancestral state has consensus support among all three of Gorilla, Chimpanzee and Orangutan, hence there is an additional column for that information. If intending to estimate divergence times for human populations, the files in 'Ancestral_states.zip' can be downloaded and used, though please note that the method no longer assumes this final column (so other users using for example 2 ancestral species do not need to overly change their formatting), so please re-format to remove those rows with <3 consensus. 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4441887.svg)](https://doi.org/10.5281/zenodo.4441887)
 
----------------------------------------------------------
-
-Brief description of included scripts:
-
-'get_file_name.py' - this links keywords to full vcf file names and paths for ease of implementation. The User should edit to include vcf file paths and a relevant keyword for each individual's vcfs.
-
-'count_sample_confs_per_ind_TT.py' & 'count_sample_confs_per_ind_TTO.py'.<br/>
-These scripts take all-sites vcfs as input, and return counts of sample configurations in 5MB blocks of the genome. Users should edit each script to include file paths for ancestral state and vcf files. Resulting counts are outputted to 'DIR_counts_per_5cm_TT/' and 'DIR_counts_per_5cm_TTO/' respectively.
-
-'get_counts_TT.sh' and 'get_counts_TTO.sh'.<br/>
-These are example SLURM submission scripts that can be used to implement the above scripts for the 22 autosomes of the human genome, and for as many pairwise individual comparisons as desired. Users should edit to include relevant vcf keywords and SLURM commands.
-
-'get_estimates_TT.py'.<br/>
-This uses the sample configuration counts previously obtained to estimate parameters including divergence times. Results are outputted to 'DIR_estimates_TT/'.
-
-'get_estimates_TTO.py'.<br/>
-This script uses the sample configuration counts previously obtained to estimate parameters including divergence times. Results are outputted to 'DIR_estimates_TTO/'.
-
-'plot_TT.R'.<br/>
-This R script will create plots of divergence time estimates present in 'DIR_estimates_TT/', and output plots to 'DIR_plots/'.
-
-'plot_TTO.R'.<br/>
-This R script will create plots of divergence time estimates present in 'DIR_estimates_TTO/', and output plots to 'DIR_plots/'.
-
-'wbj.py'.<br/>
-This script contains functions used by 'get_estimates_TT.py' and 'get_estimates_TTO.py' to perform weighted bloack jack-knife estimation of parameters.
 
 ---------------------------------------------------------
+## TT Arguments
+All arguments can also be found by typing "python3 TT_Method.py --help" on the commandline. 
 
-Implementation:
+-1 --pop1: intakes one or more strings, the file path to the vcf(s) for the diploid individual from population 1. Required.
 
-The User should create the following directories at the same location as scripts:<br/>
-DIR_counts_per_5cm_TT<br/>
-DIR_counts_per_5cm_TTO_$OUTGROUP<br/>
-DIR_error_TT<br/>
-DIR_error_TTO<br/>
-DIR_estimates_TT<br/>
-DIR_estimates_TTO/$OUTGROUP_res/<br/> 
-DIR_plots/TTO_$OUTGROUP<br/>
-(where $OUTGROUP is the keyword of an outgroup individual from 'get_file_name.py')
+-2 --pop2: intakes one or more stirngs, the file path to the vcf(s) for the diploid individual from population 2. Required. 
 
-Once the necessary script have been edited to include vcf locations, the TT & TTO methods can be implemented simply by using:<br/>
-bash get_counts_TT.sh<br/>
-python get_estimates_TT.py<br/>
-Rscript TT_plot.R
+-a --ancestral: intakes one or more strings, the file path to the ancestral states file. Information on how to generate these is found [below](#creating-ancestral-state-files). Required.
 
-bash get_counts_TTO.sh<br/>
-python get_estimates_TTO.py $OUTGROUP<br/> 
-Rscript TTO_plot.R $OUTGROUP<br/> 
-(where OUTGROUP is the keyword of an outgroup individual from 'get_file_name.py')
+-k --keywords: intakes two strings, keywords for the individuals, and should be in the same order as the input parameters. Optional, and defaults to "pop1" and "pop2". 
+
+-o --out: intakes one string, the name for the output directory. Optional, defaults "TT_out_pop1_pop2". 
+
+-w, --window: intakes one int, the window size for weighted-block jackknife. Optional, default is 5,000,000 which corresponds to about 5cm. 
+
+-c --counts: flag to print counts per chromosome per window to a counts file in the output directory. Optional, can be used for inspecting when errors during calculations happens, or when results of calculations look strange.
+
+-d --depth_thresholds: required, two ints in the order of Low_Coverage then High_Coverage, the user should define what is too low or too high coverage for their particular dataset
+
+---------------------------------------------------------
+## TTo Arguments
+All arguments can also be found by typing "python3 TTo_Method.py --help" on the commandline. 
+
+-i --in: intakes 3 strings, genotype file (with path) for the two individuals and the outgroup (MUST be in that order). Assumes files are separated by chromosome, see -C if not. 
+
+-t --type: intakes 1 int, options for input filetypes, 1 = vcf, 2 = tped, 3 = bam. 
+
+-a --ancestral: intakes 1 string, ancestral states file (with path).
+
+-k --keywords: optional, intakes 3 strings, keywords for the individuals and the outgroup (MUST be in the same order as in -f), default = "ind1" "ind2" "outgroup".
+
+-o --out: optional, intakes 1 string, a user-given name for the output directory. Default "TTo_out_ind1_ind2_outgroup".
+
+-w, --window: intakes one int, the window size for weighted-block jackknife. Optional, default is 5,000,000 which corresponds to about 5cm. 
+
+-c --counts: flag to print counts per chromosome per window to a counts file in the output directory. Optional, can be used for inspecting when errors during calculations happens, or when results of calculations look strange.
+
+-T -TT: optional flag to include TT estimates of statistics (i.e. without using an outgroup) for comparison.
+
+-d --depth_thresholds: required, two ints in the order of Low_Coverage then High_Coverage, the user should define what is too low or too high coverage for their particular dataset
+
+---------------------------------------------------------
+## File Input
+Vcfs for populations and outgroups, a tab seperated text file of ancestral states with the headers "POS" and "NUCL" for two columns, the position on the genome and what nucleotide it is.
 
 
 ---------------------------------------------------------
+## Creating Ancestral State Files
+To Do Advice
 
-vcf file names:
-
-Both the TT and TTO method are set up to take compressed all-sites vcfs as input files, with one vcf per chromosome (22 vcfs per individual). To be useable, vcf file names should follow the naming convention format "...chr1.vcf.gz" for chromosome 1, and "...chr2.vcf.gz" for chromosome 2 etc. For example, in the 'get_file_names.py' script provided, the keyword 'Neanderthal' points to a general vcf file name of 'AltaiNea.hg19_1000g.dq.bqual.RG.realn-snpAD_chr.vcf.gz'. The actual vcf file names should be 'AltaiNea.hg19_1000g.dq.bqual.RG.realn-snpAD_chr1.vcf.gz' for chromosome 1, and so on.
 
 ---------------------------------------------------------
+## Choosing an Outgroup (TTo)
+Is a different outgroup to what I say in ancestral, this needs to be an in-group with the other genomes comapred to the ancestral states, but should be an outgorup to the compared genomes. 
 
-For reference:<br/>
+---------------------------------------------------------
+## References
+Original paper:<br/>
 Estimating divergence times from DNA sequences.<br/>
 Per Sjödin, James McKenna, Mattias Jakobsson.<br/>
 https://doi.org/10.1093/genetics/iyab008
