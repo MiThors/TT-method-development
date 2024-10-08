@@ -169,6 +169,7 @@ def get_res(raw_data,cond_raw_data):
 	num_sites=[]
 	g=0
 	n=0
+	print(len(raw_data),len(cond_raw_data))
 	for i in range(len(cond_raw_data)):
 		a_t=raw_data[i]
 		a_cond_t=cond_raw_data[i]
@@ -257,7 +258,7 @@ arg_list=sys.argv
 THE_COND=arg_list[1]
 
 ### Specify path to DIR containing counts for this outgroup
-COND_in_path='DIR_counts_per_5cm_TTO_'+THE_COND
+COND_in_path='/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_counts_per_5cm_TTo'
 COND_file_dict={}
 temp=os.listdir(COND_in_path)
 for x in temp:
@@ -274,7 +275,7 @@ for x in temp:
 
 ### Specify path to DIR containing TT counts
 file_dict={}
-in_path='DIR_counts_per_5cm_TT'
+in_path='/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_counts_per_5cm_TT'
 all_files=os.listdir(in_path)
 for x in all_files:
 	if x[:len('chr')]=='chr':
@@ -305,7 +306,7 @@ for x in sorted(all_comps):
 		print(x,'not in conditional data')
 		input()
 
-outPATH='DIR_estimates_TTO'+THE_COND+'_res'
+outPATH='DIR_estimates_TTo'
 
 alfa1_out=open(outPATH+'/alfa1_cond.res','w')
 alfa2_out=open(outPATH+'/alfa2_cond.res','w')

@@ -133,7 +133,7 @@ window=arg_list[5]
 ##########################
 
 # Get file name function to use ind1 ind2 etc and for outgroup
-outPATH='/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_counts_per_5cm_TTo'
+outPATH='/proj/human_evolution_msc/private/Milo/11_TTo_Debug/01_Out/Old_TTo'
 
 file_dict='Dictionary that I removed in a fit of rage'
 vcf_file1=ind1
@@ -163,6 +163,7 @@ win_end=win_start+win_step
 
 out_dict={(win_start,win_end):{'A':[0,0,0,0,0,0,0,0,0],'C':[0,0,0,0,0,0,0,0,0],'G':[0,0,0,0,0,0,0,0,0],'T':[0,0,0,0,0,0,0,0,0]}}
 
+pos_we_consider = []
 
 with ZipFile(ancPath, 'r') as z:
     with gzip.open('/proj/human_evolution_msc/private/Milo/09_Windows/00_Data/Ancestral_states/chr'+the_chr+'_consensus.txt.gz','r') as anc_file:
@@ -216,7 +217,6 @@ with ZipFile(ancPath, 'r') as z:
                             break
                         if not vcf_pos1 == vcf_pos2 == vcf_pos_ogrp == anc_pos:
                             break
-
                         at_pos=int(float(anc_pos))
                         while at_pos>win_end:
                             win_start+=win_step
@@ -253,6 +253,7 @@ with ZipFile(ancPath, 'r') as z:
                                             if not var_form=='':
                                                 der_count_ogrp=orient_and_get_count(genotype_ogrp,ref_nt_ogrp,alt_nt_ogrp,anc_nt)
                                                 if der_count_ogrp>0:
+                                                    pos_we_consider.append(at_pos)
                                                     if var_form=='OK_NO_VARIATION':
                                                         if ref_nt1==anc_nt:
                                                             out_dict[(win_start,win_end)][anc_nt][0]+=1
@@ -279,3 +280,6 @@ outf.close()
 t1 = time.time()
 total_time = t1-t0
 print(f'Total time for running count sample confs TT from initialising the python script: {total_time}')
+print()
+print(pos_we_consider)
+
