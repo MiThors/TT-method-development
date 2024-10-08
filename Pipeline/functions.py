@@ -91,6 +91,46 @@ def get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1,
         sys.exit(1)
 
 
+def get_TTo_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2, ref_og, alt_og):
+    '''Function to get what configuration the genotypes of pop1 and pop2 are in, based on the numbers of derived and ancestral alleles. 
+    Input: Ancestral nucleotide, genotypes of both populations, reference and altnerative nucleotides for both populations, all in strings
+    Output: int values corresponding to the configuration'''
+    # No derived in pop1
+    nucl_set = set([nucl_A, ref_1, ref_2, alt_1, alt_2, ref_og, alt_og]).difference('.')
+    if len(nucl_set) == 1: #Case where using the outgroup, there is no variation
+        if ref_1 == nucl_A: return 0
+        else: return 8
+    if len(nucl_set) == 2: 
+        if alt_1=='.' and alt_2=='.' and alt_og=='.': #Case where when using the outgroup, there is variation, but none of the populations have a derived
+            if ref_1 == nucl_A: return 0
+            else: return 8
+    if alt_1 == '.' and ref_1 == nucl_A: pop1_derived = 0
+    # Both derived in pop1
+    elif alt_1 == '.' and ref_1 != nucl_A: pop1_derived = 2
+    # One or more derived, counting alternate nucleotide in pop1
+    elif ref_1 == nucl_A: pop1_derived = genotype_1.count("1")
+    # Reference is the derived nucleotide, one or more derived, counting reference nucleotide in pop1
+    else: pop1_derived = genotype_1.count("0")
+    # Same as above for pop 2
+    if alt_2 == '.' and ref_2 == nucl_A: pop2_derived = 0
+    elif alt_2 == '.' and ref_2 != nucl_A: pop2_derived = 2
+    elif ref_2 == nucl_A: pop2_derived = genotype_2.count("1")
+    else: pop2_derived = genotype_2.count("0")
+
+    if pop1_derived == 0 and pop2_derived == 0: return 0 # m0 = O{0,0}
+    elif pop1_derived == 1 and pop2_derived == 0: return 1 # m1 = O{1,0}
+    elif pop1_derived == 0 and pop2_derived == 1: return 2 # m2 = O{0,1}
+    elif pop1_derived == 2 and pop2_derived == 0: return 3 # m3 = O{2,0}
+    elif pop1_derived == 0 and pop2_derived == 2: return 4 # m4 = O_{0,2}
+    elif pop1_derived == 1 and pop2_derived == 1: return 5 # m5 = O{1,1}
+    elif pop1_derived == 2 and pop2_derived == 1: return 6 # m6 = O{2,1}
+    elif pop1_derived == 1 and pop2_derived == 2: return 7 # m7 = O{1,2}
+    elif pop1_derived == 2 and pop2_derived == 2: return 8 # m8 = O{2,2}
+    else: 
+        print("Error: it seems genotype counting was able to obtain values other than (0, 1, 2) for one or both populations. According to our checks, that should not be possible, please check genotype information in vcfs.")
+        sys.exit(1)
+
+
 def get_counts_TT(iterable):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
     Input:
@@ -268,9 +308,8 @@ def get_counts_TT_and_TTo(iterable):
     window_step = 0
     out_dict = {}
     local_count = []
-    if count_TT: 
-        out_dict_TT = {}
-        local_count_TT = []
+    out_dict_TT = {}
+    local_count_TT = []
     win_start = 0
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
@@ -434,14 +473,15 @@ def get_counts_TT_and_TTo(iterable):
                         elif "2" in genotype_1 or "2" in genotype_2: continue # Check for multiallelic
 
                         # At this point, all TT checks passed, if that count needed it will be recorded
-                        elif count_TT:
+                        if count_TT:
                             configuration_index_TT = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
                             # Add one count to the relevant chromosome and configuration count
                             local_count_TT[configuration_index_TT] += 1
+                        
                         # Now on to the TTo specific checks
-                        if not set([ref_OG,alt_OG]).difference('.').issubset(nt_set): continue # All nucleotides should be A, T, C or G.
-                        elif not quality_and_filter_check(lo[qual_OG_ind], lo[filter_OG_ind], filters): continue
-                        elif len(set([ref_OG,alt_OG]).difference('.')) > 2: continue # Check for multiallelic sites
+                        if not set([ref_OG,alt_OG,nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set): continue # All nucleotides should be A, T, C or G.
+                        elif quality_and_filter_check(lo[qual_OG_ind], lo[filter_OG_ind], filters) == False: continue
+                        elif len(set([nucl_A,ref_1,ref_2,alt_1,alt_2,ref_OG,alt_OG]).difference('.')) > 2: continue # Check for multiallelic sites
                         elif bad_coverage(coverage_OG, low_cov, high_cov): continue # Check the coverage is within acceptable thresholds
                         elif '.' in genotype_OG : continue # Check if genotypes are undefined
                         elif "2" in genotype_OG : continue # Check for multiallelic
@@ -460,7 +500,207 @@ def get_counts_TT_and_TTo(iterable):
         print(f"Error: It seems that every position in files {pop1}, {pop2} and {outgroup} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
 
+def get_counts_TTo(iterable):
+    '''Function for getting counts from a vcf file for the TTo method, TT counts are included if no TT count file was given. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
+    pop1, pop2, outgroup, anc = filepaths for all files, list of one or more
+    low_cov, high_cov = coverage thresholds for filtering, set up in main method file
+    filters = list of values considered acceptable for FILTER field of vcf file
+    Returns all eight count scenarios in a dictionary, keys are chromosomes, one list of counts per chromosome'''
+    # Variable initialisation
+    pop1 = iterable[0]
+    pop2 = iterable[1]
+    outgroup = iterable[2]
+    anc = iterable[3]
+    low_cov = int(iterable[4])
+    high_cov = int(iterable[5])
+    filters = iterable[6]
+    window_size = int(iterable[7])
+    if iterable[8]: count_TT = False
+    else: count_TT = True
+    nucl = ['A','C','G','T']
+    nt_set = set(nucl)
+    window_step = 0
+    out_dict = {}
+    local_count = []
+    out_dict_TT = {}
+    local_count_TT = []
+    win_start = 0
+    passing_quality_no = 0
+    passing_cond_no = 0
+    # Opening the files
+    with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
+        with gzip.open(pop1, 'rt', encoding='utf-8') as file_1:
+            with gzip.open(pop2, 'rt', encoding='utf-8') as file_2:
+                with gzip.open(outgroup, 'rt', encoding='utf-8') as file_og:
+                    # This is a little loop to skip past the VCF file headers for both vcf files
+                    l1 = file_1.readline()
+                    l2 = file_2.readline()
+                    lo = file_og.readline()
+                    la = ancestral.readline()
+                    while l1[0:2] == '##':
+                        l1 = file_1.readline()
+                    while l2[0:2] == '##':
+                        l2 = file_2.readline()
+                    while lo[0:2] == '##':
+                        lo = file_og.readline()
 
+                    # The line that should be left is the names of all the columns, and so we can get what column the POS, QUAL and FILTER, etc. are at
+                    pop1_columns = l1.strip().split()
+                    pop2_columns = l2.strip().split()
+                    outgroup_columns = lo.strip().split()
+                    anc_columns = la.strip().split()
+                    try: 
+                        # Indexing for VCF format so there are no magic numbers, and as a test of correct file format given
+                        chrom_1_ind, pos_1_ind, ref_1_ind, alt_1_ind, qual_1_ind, filter_1_ind, format_1_ind = get_indexes(pop1_columns)
+                        chrom_2_ind, pos_2_ind, ref_2_ind, alt_2_ind, qual_2_ind, filter_2_ind, format_2_ind = get_indexes(pop2_columns)
+                        chrom_OG_ind, pos_OG_ind, ref_OG_ind, alt_OG_ind, qual_OG_ind, filter_OG_ind, format_OG_ind = get_indexes(outgroup_columns)
+                        pos_A_ind = anc_columns.index("POS")
+                        nucl_A_ind = anc_columns.index("NUCL")
+                    except ValueError:
+                        print(f"Error: Could not find all columns in in one or multiple vcf files {pop1}, {pop2} or {file_og}, or all columns in ancestral file. Please check that formatting is correct.")
+                        sys.exit(1)
+
+                    while l1 and l2 and la and lo:
+                        l1 = file_1.readline().strip().split()
+                        l2 = file_2.readline().strip().split()
+                        lo = file_og.readline().strip().split()
+                        la = ancestral.readline().strip().split()
+                        if not l1 or not l2 or not la or not lo: 
+                            if local_count:
+                                out_dict[current_chrom][0].append(local_count)
+                                out_dict[current_chrom][1].append((win_start, current_pos))
+                                if count_TT:
+                                    out_dict_TT[current_chrom][0].append(local_count_TT)
+                                    out_dict_TT[current_chrom][1].append((win_start, current_pos))
+                            break
+                        pos_1 = int(l1[pos_1_ind])
+                        pos_2 = int(l2[pos_2_ind])
+                        pos_OG = int(lo[pos_OG_ind])
+                        pos_A = int(la[pos_A_ind])
+                        while not pos_1 == pos_2 == pos_A == pos_OG:
+                            if pos_1 == min(pos_1, pos_2, pos_OG, pos_A):
+                                l1 = file_1.readline().strip().split()
+                                if l1: pos_1 = int(l1[pos_1_ind])
+                                else: break
+                            elif pos_2 == min(pos_1, pos_2, pos_OG, pos_A):
+                                l2 = file_2.readline().strip().split()
+                                if l2: pos_2 = int(l2[pos_2_ind])
+                                else: break
+                            elif pos_OG == min(pos_1, pos_2, pos_OG, pos_A):
+                                lo = file_og.readline().strip().split()
+                                if lo: pos_OG = int(lo[pos_OG_ind])
+                                else: break
+                            elif pos_A == min(pos_1, pos_2, pos_OG, pos_A):
+                                la = ancestral.readline().strip().split()
+                                if la: pos_A = int(la[pos_A_ind])
+                                else: break
+                        # Check for end of file
+                        if not l1 or not l2 or not la or not lo: 
+                            if local_count:
+                                out_dict[current_chrom][0].append(local_count)
+                                out_dict[current_chrom][1].append((win_start, current_pos))
+                                if count_TT:
+                                    out_dict_TT[current_chrom][0].append(local_count_TT)
+                                    out_dict_TT[current_chrom][1].append((win_start, current_pos))
+                            break
+                        # Check to make sure the positions are all the same. 
+                        if not pos_1 == pos_2 == pos_A == pos_OG: 
+                            print(f"Error: Files never managed to be reach at the same position, {anc} ended at {pos_A}, {pop1} at {pos_1}, {pop2} at {pos_2} and {outgroup} at {pos_OG}. Please check that correct files are  being compared, or file formatting.")
+                            sys.exit(1)
+                        # Define variables
+                        nucl_A = la[nucl_A_ind]
+                        ref_1, ref_2, ref_OG = l1[ref_1_ind], l2[ref_2_ind], lo[ref_OG_ind]
+                        alt_1, alt_2, alt_OG = l1[alt_1_ind], l2[alt_2_ind], lo[alt_OG_ind]
+                        chrom_1, chrom_2, chrom_OG = l1[chrom_1_ind], l2[chrom_2_ind], lo[chrom_OG_ind]
+
+                        if not chrom_1 == chrom_2 == chrom_OG:
+                            print(f'Error: Files at same positions, but chromosomes in {pop1}, {pop2} and {file_og} are not the same, please check file formatting.')
+                            sys.exit(1)
+                        
+                        # Check if current chromosome exists in the dict already, if not add another key for that
+                        if chrom_1 not in out_dict: 
+                            out_dict.update({chrom_1: [[],[]]})
+                            out_dict_TT.update({chrom_1: [[],[]]})
+                            if local_count: 
+                                out_dict[current_chrom][0].append(local_count)
+                                out_dict[current_chrom][1].append((win_start, current_pos))
+                                if count_TT:
+                                    out_dict_TT[current_chrom][0].append(local_count_TT)
+                                    out_dict_TT[current_chrom][1].append((win_start, current_pos))
+                            local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                            if count_TT: local_count_TT = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                            window_step = 0
+                            win_start = 0
+                        # If a position in the file is skipped, this while loop will increse the steps of the window to account for them in the genome, and update the window if it reaches the end
+                        while pos_1 - win_start != window_step:
+                            window_step += 1
+                            if window_step >= window_size:
+                                if not local_count: 
+                                    local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                                    if count_TT: local_count_TT = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                                out_dict[chrom_1][0].append(local_count)
+                                out_dict[chrom_1][1].append((win_start, win_start+window_size-1))
+                                local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                                if count_TT:
+                                    out_dict_TT[chrom_1][0].append(local_count_TT)
+                                    out_dict_TT[chrom_1][1].append((win_start, win_start+window_size-1))
+                                    local_count_TT = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                                window_step = 0
+                                win_start += window_size
+                        if window_step >= window_size:
+                            out_dict[chrom_1][0].append(local_count)
+                            out_dict[chrom_1][1].append((win_start, current_pos))
+                            local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                            if count_TT:
+                                out_dict_TT[chrom_1][0].append(local_count_TT)
+                                out_dict_TT[chrom_1][1].append((win_start, current_pos))
+                                local_count_TT = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                            window_step = 0
+                            win_start = pos_1
+
+                        current_chrom = chrom_1
+                        window_step += 1
+                        current_pos = pos_1
+
+                        # Series of quality and assumption checks to make sure that we can keep going
+                        if quality_and_filter_check(l1[qual_1_ind], l1[filter_1_ind], filters) == False or quality_and_filter_check(l2[qual_2_ind], l2[filter_2_ind], filters) == False or quality_and_filter_check(lo[qual_OG_ind], lo[filter_OG_ind], filters) == False: continue
+                        l1_format_info = l1[format_1_ind].split(':')
+                        l2_format_info = l2[format_2_ind].split(':')
+                        lo_format_info = lo[format_OG_ind].split(':')
+                        try:
+                            genotype_1_ind, genotype_2_ind, genotype_OG_ind = l1_format_info.index("GT"), l2_format_info.index("GT"), lo_format_info.index("GT")
+                            coverage_1_ind, coverage_2_ind, coverage_OG_ind = l1_format_info.index("DP"), l2_format_info.index("DP"), lo_format_info.index("DP")
+                        except ValueError:
+                            continue
+
+                        l1_genotype_info, l2_genotype_info, lo_genotype_info = l1[format_1_ind + 1].split(':'), l2[format_2_ind + 1].split(':'), lo[format_OG_ind + 1].split(':')
+                        coverage_1, coverage_2, coverage_OG = l1_genotype_info[coverage_1_ind], l2_genotype_info[coverage_2_ind], lo_genotype_info[coverage_OG_ind]
+                        genotype_1, genotype_2, genotype_OG = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind], lo_genotype_info[genotype_OG_ind]
+
+                        if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) or bad_coverage(coverage_OG, low_cov, high_cov): continue # Check the coverage is within acceptable thresholds
+                        if '.' in genotype_1 or '.' in genotype_2 or '.' in genotype_OG: continue # Check if genotypes are undefined
+                        if "2" in genotype_1 or "2" in genotype_2 or "2" in genotype_OG: continue # Check for multiallelic
+                        if nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
+                        # Tests to skip sites that satisfy neither TT nor TTo
+                        nucl_set = set([ref_OG,alt_OG,nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')
+                        if not nucl_set.issubset(nt_set):continue # All nucleotides should be resolved 
+                        if len(nucl_set) > 2: continue # Checkfor multiallelic sites
+                        # If it passes these checks, we get the genotype and coverage and check if they are also appropriate
+                        passing_quality_no += 1
+                        # TTo conditioning on the outgroup after passing all quality and assumption checks
+                        if derived_not_in_outgroup(genotype_OG, ref_OG, alt_OG, nucl_A): continue
+                        # Get the type of sample configuration, represented as the index of m0, m1, ... m8
+                        passing_cond_no += 1
+                        configuration_index = get_TTo_configuration_index(nucl_A, genotype_1, genotype_2,ref_1, ref_2, alt_1, alt_2, ref_OG, alt_OG)
+                        # Add one count to the relevant chromosome and configuration count
+                        local_count[configuration_index] += 1
+    if out_dict and not count_TT:
+        return out_dict, False, (passing_quality_no, passing_cond_no)
+    elif out_dict and out_dict_TT:
+        return out_dict, out_dict_TT, False
+    else:
+        print(f"Error: It seems that every position in files {pop1}, {pop2} and {outgroup} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
+        sys.exit(1)
 
 def estimate_param_TT(counts):
     '''Function for estimating the parameters of the model for TT counts. Methods and math are not mine (Milo), see the original TT paper for more information (on the github page).

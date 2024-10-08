@@ -39,7 +39,6 @@ parser.add_argument("-a", "--ancestral",
                     nargs = '+',
                     help = "files containing ancestral states")
 parser.add_argument("-T", "--TTCounts",
-                    nargs = 1,
                     default = False,
                     help = "optional file location of TT counts if already run")
 parser.add_argument("-k", "--keywords",  
@@ -102,11 +101,12 @@ print()
 if __name__ == '__main__':
     with multiprocessing.Pool() as pool:
         # Computes for files in parallel using CPU cores available to user
-        results = pool.map(functions.get_counts_TT_and_TTo, iterables)
+        results = pool.map(functions.get_counts_TTo, iterables)
     pool.close()
 
 print("TTo Counting Complete, combining counts.")
 print()
+
 
 # Initialise the lists that will contain all the counts per window, the ones which have and have not been conditioned on the outgroup
 counts = []
@@ -114,7 +114,7 @@ outgroup_counts = []
 
 # First grab TT counts from the file if one was provided
 if file_TT:
-    with open('TT_out_pop1_pop2/DSub100NSub100_TT_Counts.txt','rt',encoding='utf-8') as TT_counts:
+    with open(file_TT,'rt',encoding='utf-8') as TT_counts:
         l = TT_counts.readline()
         chrom = l[1:].strip()
         TT_dict = {chrom: [[],[]]}
@@ -130,7 +130,6 @@ if file_TT:
                 count = [int(x.strip('[],')) for x in all_values[2:]]
                 TT_dict[chrom][0].append(count)
                 counts.append(count)
-                
             l = TT_counts.readline()
     TT_counts.close()
   
@@ -140,6 +139,7 @@ if print_counts:
     outgroup_count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TTo_Counts.txt", 'w')
 # Comparison being one group of files if multiple were submitted
 for single_result in results:
+    print(single_result[2])
     for chrom in single_result[0]:
         if file_TT and chrom not in TT_dict: 
             print("Error: a chromosome generated from this TTo run was not found in the file from the TT run. Please make sure that the input files used for this TTo are exactly the same as were used in TT.")
@@ -158,7 +158,7 @@ for single_result in results:
             for i in range(len(single_result[0][chrom][0])):
                 outgroup_count_file.write(str(single_result[0][chrom][1][i]) + "\t" + str(single_result[0][chrom][0][i]) + "\n")
                 if not file_TT: count_file.write(str(single_result[1][chrom][1][i]) + "\t" + str(single_result[1][chrom][0][i]) + "\n")
-if print_counts: count_file.close()
+if print_counts and not file_TT: count_file.close()
 if print_counts: outgroup_count_file.close()
 
 print("TTo counts combined, estimating parameters.")
