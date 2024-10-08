@@ -100,6 +100,8 @@ counts = []
 if print_counts:
     count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
 for comparison in results:
+    print(f'Ape check done when data given in: {comparison[1]}')
+    comparison = comparison[0]
     for chrom in comparison:
         # First list for each chromosome are the counts
         counts.extend(comparison[chrom][0])

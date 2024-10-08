@@ -154,6 +154,7 @@ def get_counts_TT(iterable):
     out_dict = {}
     local_count = []
     win_start = 0
+    passed_qual = 0
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(pop1, 'rt', encoding='utf-8') as file_1:
@@ -253,11 +254,11 @@ def get_counts_TT(iterable):
                     current_chrom = chrom_1
                     window_step += 1
                     current_pos = pos_1
+                    passed_qual += 1
                     # Series of quality and assumption checks to make sure that we can keep going 
-                    if quality_and_filter_check(l1[qual_1_ind], l1[filter_1_ind], filters) == False or quality_and_filter_check(l2[qual_2_ind], l2[filter_2_ind], filters) == False: continue
-                    elif nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
-                    elif len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Check for multiallelic site
-                    elif not set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set): continue # All nucleotides should be A, T, C or G.
+                    #if quality_and_filter_check(l1[qual_1_ind], l1[filter_1_ind], filters) == False or quality_and_filter_check(l2[qual_2_ind], l2[filter_2_ind], filters) == False: continue
+                    if '.' in [l1[qual_1_ind], l2[qual_2_ind]]: continue
+                    if l1[filter_1_ind] not in filters or l2[filter_2_ind] not in filters: continue
                     # If it passes these checks, we get the genotype and coverage and check if they are also appropriate
                     l1_format_info = l1[format_1_ind].split(':')
                     l2_format_info = l2[format_2_ind].split(':')
@@ -271,9 +272,12 @@ def get_counts_TT(iterable):
                     coverage_1, coverage_2 = l1_genotype_info[coverage_1_ind], l2_genotype_info[coverage_2_ind]
                     genotype_1, genotype_2 = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind]
                     # Further checks
+                    if '.' in genotype_1 or '.' in genotype_2: continue # Check if genotypes are undefined
+                    if "2" in genotype_1 or "2" in genotype_2: continue # Check for multiallelic
                     if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
-                    elif '.' in genotype_1 or '.' in genotype_2: continue # Check if genotypes are undefined
-                    elif "2" in genotype_1 or "2" in genotype_2: continue # Check for multiallelic
+                    if nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
+                    if not set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set): continue # All nucleotides should be A, T, C or G.
+                    if len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Check for multiallelic site
                     # At this stage, all checks passed, and site will be counted
                     # Get the type of sample configuration, represented as the index of m0, m1, ... m8
                     configuration_index = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
@@ -281,7 +285,7 @@ def get_counts_TT(iterable):
                     local_count[configuration_index] += 1
     # Check if the output exists, and if so return it, else there has been an error       
     if out_dict:
-        return out_dict
+        return out_dict, passed_qual
     else:
         print(f"Error: It seems that every position in files {pop1} and {pop2} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
@@ -525,6 +529,7 @@ def get_counts_TTo(iterable):
     out_dict_TT = {}
     local_count_TT = []
     win_start = 0
+    pos_considered = 0
     passing_quality_no = 0
     passing_cond_no = 0
     # Opening the files
@@ -543,7 +548,6 @@ def get_counts_TTo(iterable):
                         l2 = file_2.readline()
                     while lo[0:2] == '##':
                         lo = file_og.readline()
-
                     # The line that should be left is the names of all the columns, and so we can get what column the POS, QUAL and FILTER, etc. are at
                     pop1_columns = l1.strip().split()
                     pop2_columns = l2.strip().split()
@@ -559,7 +563,6 @@ def get_counts_TTo(iterable):
                     except ValueError:
                         print(f"Error: Could not find all columns in in one or multiple vcf files {pop1}, {pop2} or {file_og}, or all columns in ancestral file. Please check that formatting is correct.")
                         sys.exit(1)
-
                     while l1 and l2 and la and lo:
                         l1 = file_1.readline().strip().split()
                         l2 = file_2.readline().strip().split()
@@ -662,6 +665,8 @@ def get_counts_TTo(iterable):
                         window_step += 1
                         current_pos = pos_1
 
+                        pos_considered += 1
+
                         # Series of quality and assumption checks to make sure that we can keep going
                         if quality_and_filter_check(l1[qual_1_ind], l1[filter_1_ind], filters) == False or quality_and_filter_check(l2[qual_2_ind], l2[filter_2_ind], filters) == False or quality_and_filter_check(lo[qual_OG_ind], lo[filter_OG_ind], filters) == False: continue
                         l1_format_info = l1[format_1_ind].split(':')
@@ -695,7 +700,7 @@ def get_counts_TTo(iterable):
                         # Add one count to the relevant chromosome and configuration count
                         local_count[configuration_index] += 1
     if out_dict and not count_TT:
-        return out_dict, False, (passing_quality_no, passing_cond_no)
+        return out_dict, False, ("Pos Considered: "+str(pos_considered),"Passing Quality: "+str(passing_quality_no), "Passing Conditioning: "+str(passing_cond_no))
     elif out_dict and out_dict_TT:
         return out_dict, out_dict_TT, False
     else:

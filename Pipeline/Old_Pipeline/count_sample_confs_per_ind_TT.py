@@ -120,7 +120,7 @@ def make_out_str(a_list):
 
 ######### User should edit file paths below to point to ancestral state files and vcfs #############
 ancPath='/proj/human_evolution_msc/private/Milo/09_Windows/00_Data/Ancestral_states.zip'
-vcf_path='$TMPDIR'
+vcf_path='/proj/human_evolution_msc/private/Milo/09_Windows/00_Data'
 ####################################################################################################
 
 arg_list=sys.argv
@@ -129,11 +129,13 @@ ind1=arg_list[2]
 ind2=arg_list[3]
 window=arg_list[4]
 
+passed_qual = 0
+
 ##########################
 ##########################
 
 #Get file name function to use ind1 ind2 etc
-outPATH='/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_counts_per_5cm_TT'
+outPATH='/proj/human_evolution_msc/private/Milo/11_TTo_Debug/01_Out/Old_TT'
 vcf_file1=ind1
 vcf_file2=ind2
 
@@ -206,6 +208,7 @@ with ZipFile(ancPath, 'r') as z:
                         out_dict.update({(win_start,win_end):{'A':[0,0,0,0,0,0,0,0,0],'C':[0,0,0,0,0,0,0,0,0],'G':[0,0,0,0,0,0,0,0,0],'T':[0,0,0,0,0,0,0,0,0]}})
                     anc_support=anc_d[2]
                     if anc_support=='3': # only consider positions where ancestral state is same in all 3 apes
+                        passed_qual += 1
                         qual1=vcf_data1[5]
                         qual2=vcf_data2[5]
                         if not '.' in [qual1,qual2]:
@@ -256,3 +259,5 @@ outf.close()
 t1 = time.time()
 total_time = t1-t0
 print(f'Total time for running count sample confs TT from initialising the python script: {total_time}')
+print()
+print(f'Passed ape 3 check: {passed_qual}')
