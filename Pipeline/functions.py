@@ -151,7 +151,6 @@ def get_counts_TT(iterable):
     out_dict = {}
     local_count = []
     win_start = 0
-    passed_qual = [0]
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(pop1, 'rt', encoding='utf-8') as file_1:
@@ -269,8 +268,7 @@ def get_counts_TT(iterable):
                     genotype_1, genotype_2 = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind]
                     # Further checks
                     if '.' in genotype_1 or '.' in genotype_2: continue # Check if genotypes are undefined
-                    #if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
-                    passed_qual[0] += 1
+                    if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
                     if nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
                     if not set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set): continue # All nucleotides should be A, T, C or G.
                     if len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Check for multiallelic site
@@ -282,7 +280,7 @@ def get_counts_TT(iterable):
                     local_count[configuration_index] += 1
     # Check if the output exists, and if so return it, else there has been an error       
     if out_dict:
-        return out_dict, passed_qual
+        return out_dict
     else:
         print(f"Error: It seems that every position in files {pop1} and {pop2} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)

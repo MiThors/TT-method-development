@@ -129,7 +129,6 @@ ind1=arg_list[2]
 ind2=arg_list[3]
 window=arg_list[4]
 
-passed_qual = 0
 
 ##########################
 ##########################
@@ -229,7 +228,6 @@ with ZipFile(ancPath, 'r') as z:
                                     print(vcf_pos2, vcf_data2[9:])
 ##############################CONSIDER IF YOU WANT OTHER FILTERS#############################
                                 if check_if_pass_coverage(coverage1,LOW_COV_THRESH,HIGH_COV_THRESH) and check_if_pass_coverage(coverage2,LOW_COV_THRESH,HIGH_COV_THRESH):
-                                    passed_qual += 1
 ###########################################################
                                     if anc_nt in ANCESTRAL_FILTER:
                                         var_form=check_if_ok_and_get_var_form(anc_nt,ref_nt1,ref_nt2,alt_nt1,alt_nt2)
@@ -259,5 +257,4 @@ outf.close()
 t1 = time.time()
 total_time = t1-t0
 print(f'Total time for running count sample confs TT from initialising the python script: {total_time}')
-print()
-print(f'Passed coverage: {passed_qual}')
+
