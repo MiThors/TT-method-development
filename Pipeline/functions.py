@@ -6,8 +6,6 @@ import gzip
 import sys
 from math import log
 import traceback
-import wbj
-
 
 def get_indexes(columns_list):
     '''Function to get the indexes for the relevant columns in a vcf file. This avoids magic numbers and makes code easier to understand, and additionally helps to catch formatting issues. 
@@ -129,7 +127,6 @@ def get_TTo_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, al
     else: 
         print("Error: it seems genotype counting was able to obtain values other than (0, 1, 2) for one or both populations. According to our checks, that should not be possible, please check genotype information in vcfs.")
         sys.exit(1)
-
 
 def get_counts_TT(iterable):
     '''Function for getting counts from a vcf file. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
@@ -272,14 +269,14 @@ def get_counts_TT(iterable):
                     genotype_1, genotype_2 = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind]
                     # Further checks
                     if '.' in genotype_1 or '.' in genotype_2: continue # Check if genotypes are undefined
-                    if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
+                    #if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
+                    passed_qual[0] += 1
                     if nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
                     if not set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set): continue # All nucleotides should be A, T, C or G.
                     if len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Check for multiallelic site
                     if "2" in genotype_1 or "2" in genotype_2: continue # Check for multiallelic in the actual genotypes
                     # At this stage, all checks passed, and site will be counted
                     # Get the type of sample configuration, represented as the index of m0, m1, ... m8
-                    passed_qual[0] += 1
                     configuration_index = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
                     # Add one count to the relevant chromosome and configuration count
                     local_count[configuration_index] += 1
@@ -782,6 +779,44 @@ def estimate_param_TT(counts):
     ##
     return [alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_t1_t2_diff,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst]
 
+def filter_list(g,n,a_list,site_counts):
+    b_list=[]
+    b_snps=[]
+    num_rem_wins=0
+    num_rem_snps=0
+    for i in range(g):
+        a_count=site_counts[i]
+        try:
+            b_list.append(1.0*float(a_list[i]))
+            b_snps.append(a_count)
+        except:
+            num_rem_wins+=1
+            num_rem_snps+=a_count
+    return [g-num_rem_wins,n-num_rem_snps,b_list,b_snps]
+
+def get_WBJ_mean_var(g,n,obs_mean,a_list,site_counts):
+    a_mean=0
+    if obs_mean=='NA':
+        return ('NA','NA','NA')
+    else:
+        obs_mean=1.0*float(obs_mean)
+        #print  'BEFORE',[g,n,a_list,site_counts]
+        [g,n,a_list,site_counts]=filter_list(g,n,a_list,site_counts)
+        #print  'AFTER',[g,n,a_list,site_counts]
+        for i in range(g):
+            a_count=1.0*site_counts[i]
+            a_term=1.0-1.0*(a_count/n)
+            a_mean+=a_term*a_list[i]
+        a_mean=g*obs_mean-a_mean
+        a_var=0
+        for i in range(g):
+            a_count=1.0*site_counts[i]
+            hj=1.0*n/a_count
+            a_term=hj*obs_mean-(hj-1.0)*a_list[i]-a_mean
+            a_var+=a_term*a_term/(hj-1.0)
+        a_var=a_var/g
+        return (str(obs_mean),str(a_mean),str(a_var))
+
 def get_estimates_TT(count_list):
     '''Function to obtain all parameter estimates and wbj statistics for TT method. Observed parameters for whole genome is calculated, then local parameters per window are calcualted, and both used to obtian wbj estimates. 
     Input: List of count lists per window, will be in order of chromosome but that information is not needed
@@ -857,27 +892,27 @@ def get_estimates_TT(count_list):
             l_Fst.append(Fst)
             num_sites.append(sum(count_window))
     # Obtain wbj results for each parameter
-    res=[wbj.get_WBJ_mean_var(g,n,obs_alfa1,l_alfa1,num_sites)]
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_alfa2,l_alfa2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_thetaA,l_thetaA,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_mu_t1,l_mu_t1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_mu_t2,l_mu_t2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_mu_nu1,l_mu_nu1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_mu_nu2,l_mu_nu2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_mu_diff_t1_t2,l_mu_diff_t1_t2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_drift1,l_drift1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_drift2,l_drift2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_theta1,l_theta1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_theta2,l_theta2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_W1ratio,l_W1ratio,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_W2ratio,l_W2ratio,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_D1,l_D1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_D2,l_D2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_P1,l_P1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_P2,l_P2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_P1_time,l_P1_time,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_P2_time,l_P2_time,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_Fst,l_Fst,num_sites))
+    res=[get_WBJ_mean_var(g,n,obs_alfa1,l_alfa1,num_sites)]
+    res.append(get_WBJ_mean_var(g,n,obs_alfa2,l_alfa2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_thetaA,l_thetaA,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_mu_t1,l_mu_t1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_mu_t2,l_mu_t2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_mu_nu1,l_mu_nu1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_mu_nu2,l_mu_nu2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_mu_diff_t1_t2,l_mu_diff_t1_t2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_drift1,l_drift1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_drift2,l_drift2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_theta1,l_theta1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_theta2,l_theta2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_W1ratio,l_W1ratio,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_W2ratio,l_W2ratio,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_D1,l_D1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_D2,l_D2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_P1,l_P1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_P2,l_P2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_P1_time,l_P1_time,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_P2_time,l_P2_time,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_Fst,l_Fst,num_sites))
     return res
 
 def get_cond_estimates(counts):
@@ -1013,26 +1048,26 @@ def get_estimates_TTo(count_list, outgroup_count_list):
             l_J2.append(J2)
 
             num_sites.append(sum(count))
-    res=[wbj.get_WBJ_mean_var(g,n,obs_alfa1,l_alfa1,num_sites)]
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_alfa2,l_alfa2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_test1,l_test1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_test2,l_test2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_y,l_y,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_tau2_1,l_tau2_1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_tau2_2,l_tau2_2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_tau3_1,l_tau3_1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_tau3_2,l_tau3_2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_B1,l_B1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_B2,l_B2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_U1,l_U1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_U2,l_U2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_V1,l_V1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_V2,l_V2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_tau_test,l_tau_test,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_T1,l_T1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_T2,l_T2,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_J1,l_J1,num_sites))
-    res.append(wbj.get_WBJ_mean_var(g,n,obs_J2,l_J2,num_sites))
+    res=[get_WBJ_mean_var(g,n,obs_alfa1,l_alfa1,num_sites)]
+    res.append(get_WBJ_mean_var(g,n,obs_alfa2,l_alfa2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_test1,l_test1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_test2,l_test2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_y,l_y,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_tau2_1,l_tau2_1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_tau2_2,l_tau2_2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_tau3_1,l_tau3_1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_tau3_2,l_tau3_2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_B1,l_B1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_B2,l_B2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_U1,l_U1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_U2,l_U2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_V1,l_V1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_V2,l_V2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_tau_test,l_tau_test,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_T1,l_T1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_T2,l_T2,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_J1,l_J1,num_sites))
+    res.append(get_WBJ_mean_var(g,n,obs_J2,l_J2,num_sites))
     res.append([str(x) for x in obs_d])
     return res
 

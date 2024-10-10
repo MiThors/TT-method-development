@@ -229,11 +229,11 @@ with ZipFile(ancPath, 'r') as z:
                                     print(vcf_pos2, vcf_data2[9:])
 ##############################CONSIDER IF YOU WANT OTHER FILTERS#############################
                                 if check_if_pass_coverage(coverage1,LOW_COV_THRESH,HIGH_COV_THRESH) and check_if_pass_coverage(coverage2,LOW_COV_THRESH,HIGH_COV_THRESH):
+                                    passed_qual += 1
 ###########################################################
                                     if anc_nt in ANCESTRAL_FILTER:
                                         var_form=check_if_ok_and_get_var_form(anc_nt,ref_nt1,ref_nt2,alt_nt1,alt_nt2)
                                         if not var_form=='':
-                                            passed_qual += 1
                                             if var_form=='OK_NO_VARIATION':
                                                 if ref_nt1==anc_nt:
                                                     out_dict[(win_start,win_end)][anc_nt][0]+=1
