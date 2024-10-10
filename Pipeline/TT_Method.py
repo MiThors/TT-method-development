@@ -19,7 +19,6 @@ t0 = time.time()
 # All acceptable values in the FILTERS column of a vcf file, default set to be passing all filters or a non-entry
 vcf_filters = ['PASS','.']
 
-
 # Arguments from commandline using argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-1", "--pop1",
@@ -100,7 +99,7 @@ counts = []
 if print_counts:
     count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
 for comparison in results:
-    print(f'Ape check done when data given in: {comparison[1]}')
+    print(f'Passed all qual: {comparison[1]}')
     comparison = comparison[0]
     for chrom in comparison:
         # First list for each chromosome are the counts

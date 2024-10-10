@@ -154,7 +154,7 @@ def get_counts_TT(iterable):
     out_dict = {}
     local_count = []
     win_start = 0
-    passed_qual = 0
+    passed_qual = [0]
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(pop1, 'rt', encoding='utf-8') as file_1:
@@ -254,7 +254,6 @@ def get_counts_TT(iterable):
                     current_chrom = chrom_1
                     window_step += 1
                     current_pos = pos_1
-                    passed_qual += 1
                     # Series of quality and assumption checks to make sure that we can keep going 
                     #if quality_and_filter_check(l1[qual_1_ind], l1[filter_1_ind], filters) == False or quality_and_filter_check(l2[qual_2_ind], l2[filter_2_ind], filters) == False: continue
                     if '.' in [l1[qual_1_ind], l2[qual_2_ind]]: continue
@@ -273,13 +272,14 @@ def get_counts_TT(iterable):
                     genotype_1, genotype_2 = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind]
                     # Further checks
                     if '.' in genotype_1 or '.' in genotype_2: continue # Check if genotypes are undefined
-                    if "2" in genotype_1 or "2" in genotype_2: continue # Check for multiallelic
                     if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
                     if nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
                     if not set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set): continue # All nucleotides should be A, T, C or G.
                     if len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Check for multiallelic site
+                    if "2" in genotype_1 or "2" in genotype_2: continue # Check for multiallelic in the actual genotypes
                     # At this stage, all checks passed, and site will be counted
                     # Get the type of sample configuration, represented as the index of m0, m1, ... m8
+                    passed_qual[0] += 1
                     configuration_index = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
                     # Add one count to the relevant chromosome and configuration count
                     local_count[configuration_index] += 1

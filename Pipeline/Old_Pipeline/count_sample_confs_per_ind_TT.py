@@ -208,7 +208,6 @@ with ZipFile(ancPath, 'r') as z:
                         out_dict.update({(win_start,win_end):{'A':[0,0,0,0,0,0,0,0,0],'C':[0,0,0,0,0,0,0,0,0],'G':[0,0,0,0,0,0,0,0,0],'T':[0,0,0,0,0,0,0,0,0]}})
                     anc_support=anc_d[2]
                     if anc_support=='3': # only consider positions where ancestral state is same in all 3 apes
-                        passed_qual += 1
                         qual1=vcf_data1[5]
                         qual2=vcf_data2[5]
                         if not '.' in [qual1,qual2]:
@@ -234,6 +233,7 @@ with ZipFile(ancPath, 'r') as z:
                                     if anc_nt in ANCESTRAL_FILTER:
                                         var_form=check_if_ok_and_get_var_form(anc_nt,ref_nt1,ref_nt2,alt_nt1,alt_nt2)
                                         if not var_form=='':
+                                            passed_qual += 1
                                             if var_form=='OK_NO_VARIATION':
                                                 if ref_nt1==anc_nt:
                                                     out_dict[(win_start,win_end)][anc_nt][0]+=1
@@ -260,4 +260,4 @@ t1 = time.time()
 total_time = t1-t0
 print(f'Total time for running count sample confs TT from initialising the python script: {total_time}')
 print()
-print(f'Passed ape 3 check: {passed_qual}')
+print(f'Passed coverage: {passed_qual}')
