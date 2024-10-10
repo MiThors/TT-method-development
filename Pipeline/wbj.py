@@ -13,8 +13,6 @@ def filter_list(g,n,a_list,site_counts):
             num_rem_snps+=a_count
     return [g-num_rem_wins,n-num_rem_snps,b_list,b_snps]
 
-
-
 #######REQUIRES NO SECTIONS WITH NO SNPs ARE USED
 #######'snp_counts' ARE THE NUMBER OF SNPs REMOVED FOR EACH JACK KNIFE CALCULATION
 def get_WBJ_mean_var(g,n,obs_mean,a_list,site_counts):
