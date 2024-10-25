@@ -195,26 +195,25 @@ with ZipFile(ancPath, 'r') as z:
                         vcf_pos2=vcf_data2[1]
                         vcf_pos_ogrp=vcf_ogrp[1]
                         anc_pos=anc_d[0]
-
-                    while not vcf_pos1 == vcf_pos2 == vcf_pos_ogrp == anc_pos: # loop through to sync all vcfs and ancestral state positions
-                        if int(vcf_pos1) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
-                            l1 = myf1.readline()
-                        elif int(vcf_pos2) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
-                            l2 = myf2.readline()
-                        elif int(vcf_pos_ogrp) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
-                            ogrpl = outgrpf.readline()
-                        elif int(anc_pos) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
-                            anc_l = anc_file.readline()
-                        if l1 and l2 and ogrpl and anc_l:
-                            vcf_data1 = l1.strip().split()
-                            vcf_pos1 = vcf_data1[1]
-                            vcf_data2 = l2.strip().split()
-                            vcf_pos2 = vcf_data2[1]
-                            vcf_pos_ogrp = vcf_ogrp[1]
-                            anc_d = anc_l.decode('utf-8').strip().split()
-                            anc_pos = anc_d[0]
-                        else:
-                            break
+                        while not vcf_pos1 == vcf_pos2 == vcf_pos_ogrp == anc_pos: # loop through to sync all vcfs and ancestral state positions
+                            if int(vcf_pos1) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
+                                l1 = myf1.readline()
+                            elif int(vcf_pos2) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
+                                l2 = myf2.readline()
+                            elif int(vcf_pos_ogrp) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
+                                ogrpl = outgrpf.readline()
+                            elif int(anc_pos) == min(int(vcf_pos1), int(vcf_pos2), int(vcf_pos_ogrp), int(anc_pos)):
+                                anc_l = anc_file.readline()
+                            if l1 and l2 and ogrpl and anc_l:
+                                vcf_data1 = l1.strip().split()
+                                vcf_pos1 = vcf_data1[1]
+                                vcf_data2 = l2.strip().split()
+                                vcf_pos2 = vcf_data2[1]
+                                vcf_pos_ogrp = vcf_ogrp[1]
+                                anc_d = anc_l.decode('utf-8').strip().split()
+                                anc_pos = anc_d[0]
+                            else:
+                                break
                         if not vcf_pos1 == vcf_pos2 == vcf_pos_ogrp == anc_pos:
                             break
                         at_pos=int(float(anc_pos))
@@ -232,9 +231,9 @@ with ZipFile(ancPath, 'r') as z:
                                 flag1=vcf_data1[6]
                                 flag2=vcf_data2[6]
                                 flag_ogrp=vcf_ogrp[6]
-	############################## USER CONSIDER IF YOU WANT OTHER FILTERS #############################
+	################    ############# USER CONSIDER IF YOU WANT OTHER FILTERS #############################
                                 if (flag1 in ['PASS','.']) and (flag2 in ['PASS','.'] and (flag_ogrp in ['PASS','.'])):
-	####################################################################################################
+	################    ###################################################################################
                                     anc_nt=anc_d[1]
                                     ref_nt1=vcf_data1[3]
                                     alt_nt1=vcf_data1[4]
@@ -245,9 +244,9 @@ with ZipFile(ancPath, 'r') as z:
                                     [coverage1,genotype1]=get_genotype(vcf_data1[9:])
                                     [coverage2,genotype2]=get_genotype(vcf_data2[9:])
                                     [coverage_ogrp,genotype_ogrp]=get_genotype(vcf_ogrp[9:])
-	############################## CONSIDER IF YOU WANT OTHER FILTERS #############################
-                                    if check_if_pass_coverage(coverage1,LOW_COV_THRESH,HIGH_COV_THRESH) and check_if_pass_coverage(coverage2,LOW_COV_THRESH,HIGH_COV_THRESH) and check_if_pass_coverage(coverage_ogrp,LOW_COV_THRESH,HIGH_COV_THRESH):
-	#############################################################################################
+	################    ############# CONSIDER IF YOU WANT OTHER FILTERS #############################
+                                    if check_if_pass_coverage(coverage1,LOW_COV_THRESH,HIGH_COV_THRESH) and check_if_pass_coverage(coverage2,LOW_COV_THRESH,HIGH_COV_THRESH) and check_if_pass_coverage (coverage_ogrp,LOW_COV_THRESH,HIGH_COV_THRESH):
+	################    ############################################################################
                                         if anc_nt in ANCESTRAL_FILTER:
                                             var_form=check_if_ok_and_get_var_form(anc_nt,ref_nt1,ref_nt2,ref_nt_ogrp,alt_nt1,alt_nt2,alt_nt_ogrp)
                                             if not var_form=='':

@@ -258,7 +258,7 @@ arg_list=sys.argv
 THE_COND=arg_list[1]
 
 ### Specify path to DIR containing counts for this outgroup
-COND_in_path='/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_counts_per_5cm_TTo'
+COND_in_path='/proj/human_evolution_msc/private/Milo/11_TTo_Debug/01_Out/Old_TTo'
 COND_file_dict={}
 temp=os.listdir(COND_in_path)
 for x in temp:
@@ -275,7 +275,7 @@ for x in temp:
 
 ### Specify path to DIR containing TT counts
 file_dict={}
-in_path='/proj/human_evolution_msc/private/Milo/09_Windows/03_Old_Method_Out/DIR_counts_per_5cm_TT'
+in_path='/proj/human_evolution_msc/private/Milo/11_TTo_Debug/01_Out/Old_TTo'
 all_files=os.listdir(in_path)
 for x in all_files:
 	if x[:len('chr')]=='chr':
@@ -288,25 +288,23 @@ for x in all_files:
 			file_dict.update({pop_tuple:[]})
 		file_dict[pop_tuple].append(in_path+'/'+x)
 
-
-
 all_comps=file_dict.keys()
 for x in sorted(all_comps):
 	if x in COND_file_dict.keys():
 		if not len(file_dict[x])==22 and len(COND_file_dict[x])==22:
 			print(x,len(file_dict[x]),'conditional data:',len(COND_file_dict[x]))
 			#print file_dict[x][:3]
-			input()
+			#input()
 	elif (x[1],x[0]) in COND_file_dict.keys():
 		if not len(file_dict[x])==22 and len(COND_file_dict[(x[1],x[0])])==22:
 			print(x,len(file_dict[x]),'conditional data (other order of pops):',len(COND_file_dict[(x[1],x[0])]))
 			#print file_dict[x][:3]
-			input()
+			#input()
 	else:
 		print(x,'not in conditional data')
-		input()
+		#input()
 
-outPATH='DIR_estimates_TTo'
+outPATH='/proj/human_evolution_msc/private/Milo/12_Old_Timings/TTo/Old_Out/Estimates'
 
 alfa1_out=open(outPATH+'/alfa1_cond.res','w')
 alfa2_out=open(outPATH+'/alfa2_cond.res','w')
@@ -358,6 +356,9 @@ J1_out.write(header)
 J2_out.write(header)
 
 m_counts_out.write(','.join(['branch','pop1','pop2','m10','m01','m20','m02','m11','m21','m12','m00'])+'\n')
+
+file_dict = {('Finnish','Japanese'): ["/proj/human_evolution_msc/private/Milo/12_Old_Timings/TTo/Old_Out/chr"+str(x)+"_Finnish_vs_Japanese.txt" for x in range(1,23)]}
+COND_file_dict = {('Finnish','Japanese'): ["/proj/human_evolution_msc/private/Milo/12_Old_Timings/TTo/Old_Out/chr"+str(x)+"_Finnish_vs_Japanese_vs_Yoruba.txt" for x in range(1,23)]}
 
 a_res_dict=get_estimates(file_dict,COND_file_dict)
 for a_comp in sorted(a_res_dict.keys()):
@@ -415,4 +416,4 @@ m_counts_out.close()
 
 t1 = time.time()
 total_time = t1-t0
-print(f'Total time for running get esitmates TTo from initialising the python script: {total_time}')
+print('Total time for running get esitmates TTo from initialising the python script: '+ str(total_time))

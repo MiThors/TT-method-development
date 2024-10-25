@@ -127,14 +127,13 @@ arg_list=sys.argv
 the_chr=arg_list[1]
 ind1=arg_list[2]
 ind2=arg_list[3]
-window=arg_list[4]
 
 
 ##########################
 ##########################
 
 #Get file name function to use ind1 ind2 etc
-outPATH='/proj/human_evolution_msc/private/Milo/11_TTo_Debug/01_Out/Old_TT'
+outPATH='/proj/human_evolution_msc/private/Milo/12_Old_Timings/TTo/Old_Out'
 vcf_file1=ind1
 vcf_file2=ind2
 
@@ -245,7 +244,7 @@ with ZipFile(ancPath, 'r') as z:
                     l2=myf2.readline()
                     anc_l=anc_file.readline()
 
-outf=open(outPATH+'/chr'+the_chr+'_'+'Finnish'+'_vs_'+'Japanese'+window+'.txt','w')
+outf=open(outPATH+'/chr'+the_chr+'_'+'Finnish'+'_vs_'+'Japanese.txt','w')
 
 for a_tuple in sorted(out_dict.keys()):
     out_str=str(a_tuple[0])+','+str(a_tuple[1])
@@ -256,5 +255,5 @@ outf.close()
 
 t1 = time.time()
 total_time = t1-t0
-print(f'Total time for running count sample confs TT from initialising the python script: {total_time}')
+print('Total time for running count sample confs TT from initialising the python script: '+str(total_time))
 
