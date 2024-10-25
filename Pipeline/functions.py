@@ -41,7 +41,7 @@ def bad_coverage(depth, low, high):
     else: return True
 
 
-def derived_not_in_outgroup(outgroup_genotype, ref, alt, nucl_A):
+def passed_conditioning(outgroup_genotype, ref, alt, nucl_A):
     '''Function to check if a derived allele is found in the outgroup for TTo conditional counting.
     Input: outgroup genotype as a string, reference nucleotide for outgroup, alternate nucleotide for outgroup and ancestral nucleotide all as strings
     Output: True if no derived alleles are found in the outgroup, False if there is at least one derived allele'''
@@ -53,8 +53,8 @@ def derived_not_in_outgroup(outgroup_genotype, ref, alt, nucl_A):
     elif ref == nucl_A: derived = outgroup_genotype.count("1")
     # Reference is the derived nucleotide, one or more derived
     else: derived = outgroup_genotype.count("0")
-    if derived > 0 : return False
-    else: return True
+    if derived > 0 : return True
+    else: return False
 
 
 def get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2):
@@ -310,6 +310,7 @@ def get_counts_TT_and_TTo(iterable):
     out_dict_TT = {}
     local_count_TT = []
     win_start = 0
+    testing = [0,0,0] #pos_considered, passing_quality_no, passing_cond_no
     # Opening the files
     with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
         with gzip.open(pop1, 'rt', encoding='utf-8') as file_1:
@@ -445,13 +446,15 @@ def get_counts_TT_and_TTo(iterable):
                         current_chrom = chrom_1
                         window_step += 1
                         current_pos = pos_1
+
+                        testing[0] += 1
                     
                         # Series of quality and assumption checks to make sure that we can keep going
                         if nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
                         # Tests to skip sites that satisfy neither TT nor TTo
-                        elif not set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set):continue # All nucleotides should be resolved 
-                        elif quality_and_filter_check(l1[qual_1_ind], l1[filter_1_ind], filters) == False or quality_and_filter_check(l2[qual_2_ind], l2[filter_2_ind], filters) == False: continue
-                        elif len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Checkfor multiallelic sites
+                        if not set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set):continue # All nucleotides should be resolved 
+                        if quality_and_filter_check(l1[qual_1_ind], l1[filter_1_ind], filters) == False or quality_and_filter_check(l2[qual_2_ind], l2[filter_2_ind], filters) == False: continue
+                        if len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Checkfor multiallelic sites
 
                         # If it passes these checks, we get the genotype and coverage and check if they are also appropriate
                         l1_format_info = l1[format_1_ind].split(':')
@@ -468,8 +471,8 @@ def get_counts_TT_and_TTo(iterable):
                         genotype_1, genotype_2, genotype_OG = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind], lo_genotype_info[genotype_OG_ind]
                         
                         if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov): continue # Check the coverage is within acceptable thresholds
-                        elif '.' in genotype_1 or '.' in genotype_2: continue # Check if genotypes are undefined
-                        elif "2" in genotype_1 or "2" in genotype_2: continue # Check for multiallelic
+                        if '.' in genotype_1 or '.' in genotype_2: continue # Check if genotypes are undefined
+                        if "2" in genotype_1 or "2" in genotype_2: continue # Check for multiallelic
 
                         # At this point, all TT checks passed, if that count needed it will be recorded
                         if count_TT:
@@ -479,25 +482,102 @@ def get_counts_TT_and_TTo(iterable):
                         
                         # Now on to the TTo specific checks
                         if not set([ref_OG,alt_OG,nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set): continue # All nucleotides should be A, T, C or G.
-                        elif quality_and_filter_check(lo[qual_OG_ind], lo[filter_OG_ind], filters) == False: continue
-                        elif len(set([nucl_A,ref_1,ref_2,alt_1,alt_2,ref_OG,alt_OG]).difference('.')) > 2: continue # Check for multiallelic sites
-                        elif bad_coverage(coverage_OG, low_cov, high_cov): continue # Check the coverage is within acceptable thresholds
-                        elif '.' in genotype_OG : continue # Check if genotypes are undefined
-                        elif "2" in genotype_OG : continue # Check for multiallelic
+                        if quality_and_filter_check(lo[qual_OG_ind], lo[filter_OG_ind], filters) == False: continue
+                        if len(set([nucl_A,ref_1,ref_2,alt_1,alt_2,ref_OG,alt_OG]).difference('.')) > 2: continue # Check for multiallelic sites
+                        if bad_coverage(coverage_OG, low_cov, high_cov): continue # Check the coverage is within acceptable thresholds
+                        if '.' in genotype_OG : continue # Check if genotypes are undefined
+                        if "2" in genotype_OG : continue # Check for multiallelic
+                        testing[1] += 1
                         # TTo conditioning on the outgroup after passing all quality and assumption checks
-                        elif derived_not_in_outgroup(genotype_OG, ref_OG, alt_OG, nucl_A): continue
+                        if not passed_conditioning(genotype_OG, ref_OG, alt_OG, nucl_A): continue
                         # Get the type of sample configuration, represented as the index of m0, m1, ... m8
                         else:
+                            testing[2] += 2
                             configuration_index = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
                             # Add one count to the relevant chromosome and configuration count
                             local_count[configuration_index] += 1
     if out_dict and not count_TT:
-        return out_dict, False
+        return out_dict, False, testing
     elif out_dict and out_dict_TT:
-        return out_dict, out_dict_TT
+        return out_dict, out_dict_TT, testing
     else:
         print(f"Error: It seems that every position in files {pop1}, {pop2} and {outgroup} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
+
+def get_genotype(a_list):
+    b_geno=''
+    coverage=0
+    for x in a_list:
+        d=x.split(':')
+        if d[0]=='./.':
+            return [0,'']
+        b_geno=d[0]
+        if len(d)>2:
+            if d[2]=='.':
+                return [0,'']
+            coverage += int(d[2])
+        else:
+            coverage+=int(d[1])
+    return [coverage,b_geno]
+
+def check_if_pass_coverage(a_coverage,LOW_COV_THRESH,HIGH_COV_THRESH):
+    if (a_coverage>LOW_COV_THRESH and a_coverage<HIGH_COV_THRESH):
+        return 1
+    else:
+        return 0
+
+def check_if_ok_and_get_var_form(anc_nt,ref_nt1,ref_nt2,ref_nt_ogrp,alt_nt1,alt_nt2,alt_nt_ogrp):
+    set1=set([anc_nt,ref_nt1,ref_nt2,ref_nt_ogrp,alt_nt1,alt_nt2,alt_nt_ogrp]).difference('.')
+    NUCL=['A','C','G','T']
+    nt_set=set(NUCL)
+    if set1.issubset(nt_set):
+        if len(set1)==1:
+            return 'OK_NO_VARIATION'
+        if len(set1)==2:
+            if alt_nt1=='.' and alt_nt2=='.' and alt_nt_ogrp=='.':
+                return 'OK_NO_VARIATION'
+            else:
+                return 'OK_POLY'
+    return ''
+
+def orient_and_get_count(genotype,ref_nt,alt_nt,anc_nt):
+    if genotype.count('2')>0:
+        print('Genotype contains 2 derived.')
+    if alt_nt=='.':
+        if ref_nt==anc_nt:
+            return 0
+        else:
+            return 2
+    else:
+        if ref_nt==anc_nt:
+            return genotype.count('1')
+        else:
+            return genotype.count('0')
+
+def get_sample_conf(der_count1,der_count2):
+    if der_count1+der_count2==0:
+        return 0
+    if der_count1+der_count2==4:
+        return 0
+    if der_count1+der_count2==1:
+        if der_count1==1:
+            return 1
+        else:
+            return 2
+    if der_count1+der_count2==2:
+        if der_count1==2:
+            return 3
+        if der_count2==2:
+            return 4
+        else:
+            return 5
+    if der_count1+der_count2==3:
+        if der_count1==2:
+            return 6
+        else:
+            return 7
+    print('THIS SHOULD NEVER HAPPEN')
+    return 100
 
 def get_counts_TTo(iterable):
     '''Function for getting counts from a vcf file for the TTo method, TT counts are included if no TT count file was given. Opens files, checks formatting for pop1 and pop2 columns is correct, aligns positions in all files, ignores lines that do not pass filters, then adds counts to the appropriate situation.
@@ -518,20 +598,17 @@ def get_counts_TTo(iterable):
     else: count_TT = True
     nucl = ['A','C','G','T']
     nt_set = set(nucl)
-    window_step = 0
     out_dict = {}
     local_count = []
     out_dict_TT = {}
     local_count_TT = []
     win_start = 0
     pos_considered = 0
-    passing_quality_no = 0
-    passing_cond_no = 0
     # Opening the files
-    with gzip.open(anc,'rt',encoding='utf-8') as ancestral:
-        with gzip.open(pop1, 'rt', encoding='utf-8') as file_1:
-            with gzip.open(pop2, 'rt', encoding='utf-8') as file_2:
-                with gzip.open(outgroup, 'rt', encoding='utf-8') as file_og:
+    with gzip.open(anc,'rt') as ancestral:
+        with gzip.open(pop1, 'rt') as file_1:
+            with gzip.open(pop2, 'rt') as file_2:
+                with gzip.open(outgroup, 'rt') as file_og:
                     # This is a little loop to skip past the VCF file headers for both vcf files
                     l1 = file_1.readline()
                     l2 = file_2.readline()
@@ -620,84 +697,115 @@ def get_counts_TTo(iterable):
                             out_dict.update({chrom_1: [[],[]]})
                             out_dict_TT.update({chrom_1: [[],[]]})
                             if local_count: 
-                                out_dict[current_chrom][0].append(local_count)
-                                out_dict[current_chrom][1].append((win_start, current_pos))
-                                if count_TT:
-                                    out_dict_TT[current_chrom][0].append(local_count_TT)
-                                    out_dict_TT[current_chrom][1].append((win_start, current_pos))
-                            local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-                            if count_TT: local_count_TT = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-                            window_step = 0
-                            win_start = 0
-                        # If a position in the file is skipped, this while loop will increse the steps of the window to account for them in the genome, and update the window if it reaches the end
-                        while pos_1 - win_start != window_step:
-                            window_step += 1
-                            if window_step >= window_size:
-                                if not local_count: 
-                                    local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-                                    if count_TT: local_count_TT = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                                 out_dict[chrom_1][0].append(local_count)
-                                out_dict[chrom_1][1].append((win_start, win_start+window_size-1))
-                                local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                                out_dict[chrom_1][1].append((win_start, win_start + window_size))
                                 if count_TT:
                                     out_dict_TT[chrom_1][0].append(local_count_TT)
-                                    out_dict_TT[chrom_1][1].append((win_start, win_start+window_size-1))
-                                    local_count_TT = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-                                window_step = 0
-                                win_start += window_size
-                        if window_step >= window_size:
+                                    out_dict_TT[chrom_1][1].append((win_start, win_start + window_size))
+                            local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                            if count_TT: local_count_TT = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                            win_start = 0
+                        # If a position in the file is skipped, this while loop will increse the steps of the window to account for them in the genome, and update the window if it reaches the end
+                        while pos_1 > (win_start + window_size):
                             out_dict[chrom_1][0].append(local_count)
-                            out_dict[chrom_1][1].append((win_start, current_pos))
+                            out_dict[chrom_1][1].append((win_start, win_start + window_size))
                             local_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
                             if count_TT:
                                 out_dict_TT[chrom_1][0].append(local_count_TT)
-                                out_dict_TT[chrom_1][1].append((win_start, current_pos))
+                                out_dict_TT[chrom_1][1].append((win_start, win_start + window_size))
                                 local_count_TT = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-                            window_step = 0
-                            win_start = pos_1
-
+                            win_start += window_size
+                        
                         current_chrom = chrom_1
-                        window_step += 1
                         current_pos = pos_1
 
-                        pos_considered += 1
-
+                        if count_TT:
+                            # Series of quality and assumption checks to make sure that we can keep going 
+                            #if quality_and_filter_check(l1[qual_1_ind], l1[filter_1_ind], filters) == False or quality_and_filter_check(l2[qual_2_ind], l2[filter_2_ind], filters) == False: continue
+                            if '.' in [l1[qual_1_ind], l2[qual_2_ind]]: continue
+                            if l1[filter_1_ind] not in filters or l2[filter_2_ind] not in filters: continue
+                            # If it passes these checks, we get the genotype and coverage and check if they are also appropriate
+                            l1_format_info = l1[format_1_ind].split(':')
+                            l2_format_info = l2[format_2_ind].split(':')
+                            try:
+                                genotype_1_ind, genotype_2_ind = l1_format_info.index("GT"), l2_format_info.index("GT")
+                                coverage_1_ind, coverage_2_ind = l1_format_info.index("DP"), l2_format_info.index("DP")
+                            except ValueError:
+                                continue
+                            # Get genotype and coverage information
+                            l1_genotype_info, l2_genotype_info,  = l1[format_1_ind + 1].split(':'), l2[format_2_ind + 1].split(':')
+                            coverage_1, coverage_2 = l1_genotype_info[coverage_1_ind], l2_genotype_info[coverage_2_ind]
+                            genotype_1, genotype_2 = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind]
+                            # Further checks
+                            if '.' in genotype_1 or '.' in genotype_2: continue # Check if genotypes are undefined
+                            if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) : continue # Check the coverage is within acceptable thresholds
+                            if nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
+                            if not set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.').issubset(nt_set): continue # All nucleotides should be A, T, C or G.
+                            if len(set([nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')) > 2: continue # Check for multiallelic site
+                            if "2" in genotype_1 or "2" in genotype_2: continue # Check for multiallelic in the actual genotypes
+                            # At this stage, all checks passed, and site will be counted
+                            # Get the type of sample configuration, represented as the index of m0, m1, ... m8
+                            configuration_index_TT = get_configuration_index(nucl_A, genotype_1, genotype_2, ref_1, ref_2, alt_1, alt_2)
+                            # Add one count to the relevant chromosome and configuration count
+                            local_count_TT[configuration_index_TT] += 1
                         # Series of quality and assumption checks to make sure that we can keep going
-                        if quality_and_filter_check(l1[qual_1_ind], l1[filter_1_ind], filters) == False or quality_and_filter_check(l2[qual_2_ind], l2[filter_2_ind], filters) == False or quality_and_filter_check(lo[qual_OG_ind], lo[filter_OG_ind], filters) == False: continue
-                        l1_format_info = l1[format_1_ind].split(':')
-                        l2_format_info = l2[format_2_ind].split(':')
-                        lo_format_info = lo[format_OG_ind].split(':')
-                        try:
-                            genotype_1_ind, genotype_2_ind, genotype_OG_ind = l1_format_info.index("GT"), l2_format_info.index("GT"), lo_format_info.index("GT")
-                            coverage_1_ind, coverage_2_ind, coverage_OG_ind = l1_format_info.index("DP"), l2_format_info.index("DP"), lo_format_info.index("DP")
-                        except ValueError:
-                            continue
-
-                        l1_genotype_info, l2_genotype_info, lo_genotype_info = l1[format_1_ind + 1].split(':'), l2[format_2_ind + 1].split(':'), lo[format_OG_ind + 1].split(':')
-                        coverage_1, coverage_2, coverage_OG = l1_genotype_info[coverage_1_ind], l2_genotype_info[coverage_2_ind], lo_genotype_info[coverage_OG_ind]
-                        genotype_1, genotype_2, genotype_OG = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind], lo_genotype_info[genotype_OG_ind]
-
-                        if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) or bad_coverage(coverage_OG, low_cov, high_cov): continue # Check the coverage is within acceptable thresholds
-                        if '.' in genotype_1 or '.' in genotype_2 or '.' in genotype_OG: continue # Check if genotypes are undefined
-                        if "2" in genotype_1 or "2" in genotype_2 or "2" in genotype_OG: continue # Check for multiallelic
-                        if nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
+                        if not '.' in [l1[qual_1_ind], l2[qual_2_ind], lo[qual_OG_ind]]:
+	############################## USER CONSIDER IF YOU WANT OTHER FILTERS #############################
+                                if (l1[filter_1_ind] in ['PASS','.']) and (l2[filter_2_ind] in ['PASS','.'] and (lo[filter_OG_ind] in ['PASS','.'])):
+	####################################################################################################
+                                    [coverage1,genotype1]=get_genotype(l1[9:])
+                                    [coverage2,genotype2]=get_genotype(l2[9:])
+                                    [coverage_ogrp,genotype_ogrp]=get_genotype(lo[9:])
+	############################## CONSIDER IF YOU WANT OTHER FILTERS #############################
+                                    if check_if_pass_coverage(coverage1,low_cov,high_cov) and check_if_pass_coverage(coverage2,low_cov,high_cov) and check_if_pass_coverage(coverage_ogrp,low_cov,high_cov):
+	#############################################################################################
+                                        if nucl_A in nucl:
+                                            var_form=check_if_ok_and_get_var_form(nucl_A,ref_1,ref_2,ref_OG,alt_1,alt_2,alt_OG)
+                                            if not var_form=='':
+                                                der_count_ogrp=orient_and_get_count(genotype_ogrp,ref_OG,alt_OG,nucl_A)
+                                                if der_count_ogrp>0:
+                                                    if var_form=='OK_NO_VARIATION':
+                                                        if ref_1==nucl_A:
+                                                            local_count[0] += 1
+                                                        else:
+                                                            local_count[8] += 1
+                                                    elif var_form=='OK_POLY':
+                                                        der_count1=orient_and_get_count(genotype1,ref_1,alt_1,nucl_A)
+                                                        der_count2=orient_and_get_count(genotype2,ref_1,alt_2,nucl_A)
+                                                        local_count[get_sample_conf(der_count1,der_count2)] += 1
+                        #if '.' in [l1[qual_1_ind], l2[qual_2_ind], lo[qual_OG_ind]]: continue
+                        #if l1[filter_1_ind] not in filters or l2[filter_2_ind] not in filters or lo[filter_OG_ind] not in filters: continue
+                        #l1_format_info = l1[format_1_ind].split(':')
+                        #l2_format_info = l2[format_2_ind].split(':')
+                        #lo_format_info = lo[format_OG_ind].split(':')
+                        #try:
+                            #genotype_1_ind, genotype_2_ind, genotype_OG_ind = l1_format_info.index("GT"), #l2_format_info.index("GT"), lo_format_info.index("GT")
+                            #coverage_1_ind, coverage_2_ind, coverage_OG_ind = l1_format_info.index("DP"), #l2_format_info.index("DP"), lo_format_info.index("DP")
+                        #except ValueError:
+                            #continue
+                        #l1_genotype_info, l2_genotype_info, lo_genotype_info = l1[format_1_ind + 1].split(':'), l2[format_2_ind + 1].split(':'), lo[format_OG_ind + 1].split(':')
+                        #coverage_1, coverage_2, coverage_OG = l1_genotype_info[coverage_1_ind], l2_genotype_info[coverage_2_ind], lo_genotype_info[coverage_OG_ind]
+                        #genotype_1, genotype_2, genotype_OG = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind], lo_genotype_info[genotype_OG_ind]
+                        #if '.' in genotype_1 or '.' in genotype_2 or '.' in genotype_OG: continue # Check if genotypes are undefined
+                        #if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) or bad_coverage(coverage_OG, low_cov, high_cov): continue # Check the coverage is within acceptable thresholds
+                        #pos_considered += 1
+                        #if nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
                         # Tests to skip sites that satisfy neither TT nor TTo
-                        nucl_set = set([ref_OG,alt_OG,nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')
-                        if not nucl_set.issubset(nt_set):continue # All nucleotides should be resolved 
-                        if len(nucl_set) > 2: continue # Checkfor multiallelic sites
+                        #nucl_set = set([ref_OG,alt_OG,nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')
+                        #if not nucl_set.issubset(nt_set): continue # All nucleotides should be resolved 
+                        #if len(nucl_set) > 2: continue # Checkfor multiallelic sites
                         # If it passes these checks, we get the genotype and coverage and check if they are also appropriate
-                        passing_quality_no += 1
+                        #if "2" in genotype_1 or "2" in genotype_2 or "2" in genotype_OG: continue # Check for multiallelic
                         # TTo conditioning on the outgroup after passing all quality and assumption checks
-                        if derived_not_in_outgroup(genotype_OG, ref_OG, alt_OG, nucl_A): continue
+                        #if not passed_conditioning(genotype_OG, ref_OG, alt_OG, nucl_A): continue
                         # Get the type of sample configuration, represented as the index of m0, m1, ... m8
-                        passing_cond_no += 1
-                        configuration_index = get_TTo_configuration_index(nucl_A, genotype_1, genotype_2,ref_1, ref_2, alt_1, alt_2, ref_OG, alt_OG)
+                        #configuration_index = get_TTo_configuration_index(nucl_A, genotype_1, genotype_2,ref_1, ref_2, alt_1, alt_2, ref_OG, alt_OG)
                         # Add one count to the relevant chromosome and configuration count
-                        local_count[configuration_index] += 1
+                        #local_count[configuration_index] += 1
     if out_dict and not count_TT:
-        return out_dict, False, ("Pos Considered: "+str(pos_considered),"Passing Quality: "+str(passing_quality_no), "Passing Conditioning: "+str(passing_cond_no))
+        return out_dict, False, pos_considered
     elif out_dict and out_dict_TT:
-        return out_dict, out_dict_TT, False
+        return out_dict, out_dict_TT, pos_considered
     else:
         print(f"Error: It seems that every position in files {pop1}, {pop2} and {outgroup} failed all checks and no counts were generated for these files. Please check file formatting or whether all positions truly violate assumptions.")
         sys.exit(1)
