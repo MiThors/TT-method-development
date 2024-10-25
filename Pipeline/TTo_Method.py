@@ -107,7 +107,6 @@ if __name__ == '__main__':
 print("TTo Counting Complete, combining counts.")
 print()
 
-
 # Initialise the lists that will contain all the counts per window, the ones which have and have not been conditioned on the outgroup
 counts = []
 outgroup_counts = []
@@ -138,8 +137,7 @@ if print_counts:
     if not file_TT: count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TT_Counts.txt", 'w')
     outgroup_count_file = open(out_dir + "/" + pop1_key + pop2_key + "_TTo_Counts.txt", 'w')
 # Comparison being one group of files if multiple were submitted
-for single_result in results:
-    print(single_result[2])
+for single_result in results:  
     for chrom in single_result[0]:
         if file_TT and chrom not in TT_dict: 
             print("Error: a chromosome generated from this TTo run was not found in the file from the TT run. Please make sure that the input files used for this TTo are exactly the same as were used in TT.")
