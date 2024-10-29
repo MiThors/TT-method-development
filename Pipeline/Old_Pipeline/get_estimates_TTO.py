@@ -145,6 +145,7 @@ def get_res(raw_data,cond_raw_data):
 	for a_tuple in cond_raw_data:
 		for i in range(len(a_tuple)):
 			obs_cond_d[i]+=a_tuple[i]
+	print(obs_d, obs_cond_d)
 	[obs_alfa1,obs_alfa2,obs_test1,obs_test2,obs_y,obs_tau2_1,obs_tau2_2,obs_tau3_1,obs_tau3_2,obs_B1,obs_B2,obs_U1,obs_U2,obs_V1,obs_V2,obs_tau_test,obs_T1,obs_T2,obs_J1,obs_J2]=estimate_param(obs_d,obs_cond_d)
 	l_alfa1=[]
 	l_alfa2=[]
@@ -258,7 +259,7 @@ arg_list=sys.argv
 THE_COND=arg_list[1]
 
 ### Specify path to DIR containing counts for this outgroup
-COND_in_path='/proj/human_evolution_msc/private/Milo/11_TTo_Debug/01_Out/Old_TTo'
+COND_in_path='/proj/human_evolution_msc/private/Milo/12_Old_Timings/TTo/Old_Out/Estimates'
 COND_file_dict={}
 temp=os.listdir(COND_in_path)
 for x in temp:
@@ -275,7 +276,7 @@ for x in temp:
 
 ### Specify path to DIR containing TT counts
 file_dict={}
-in_path='/proj/human_evolution_msc/private/Milo/11_TTo_Debug/01_Out/Old_TTo'
+in_path='/proj/human_evolution_msc/private/Milo/12_Old_Timings/TTo/Old_Out/Estimates'
 all_files=os.listdir(in_path)
 for x in all_files:
 	if x[:len('chr')]=='chr':
