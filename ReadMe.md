@@ -28,9 +28,9 @@ All arguments can also be found by typing "python3 TT_Method.py --help" on the c
 
 -k --keywords: intakes two strings, keywords for the individuals, and should be in the same order as the input parameters. Optional, and defaults to "pop1" and "pop2". 
 
--o --out: intakes one string, the name for the output directory. Optional, defaults "TT_out_pop1_pop2". 
+-o --out: intakes one string, the name for the output directory. Optional, defaults "TT_out_pop1_pop2", using the keywords given.
 
--w, --window: intakes one int, the window size for weighted-block jackknife. Optional, default is 5,000,000 which corresponds to about 5cm. 
+-w, --window: intakes one int, the window size for weighted-block jackknife. Optional, default is 2,500,000 which corresponds to about 5cm. 
 
 -c --counts: flag to print counts per chromosome per window to a counts file in the output directory. Optional, can be used for inspecting when errors during calculations happens, or when results of calculations look strange.
 
@@ -40,9 +40,11 @@ All arguments can also be found by typing "python3 TT_Method.py --help" on the c
 ## TTo Arguments
 All arguments can also be found by typing "python3 TTo_Method.py --help" on the commandline. 
 
--i --in: intakes 3 strings, genotype file (with path) for the two individuals and the outgroup (MUST be in that order). Assumes files are separated by chromosome, see -C if not. 
+-1 --pop1: intakes one or more strings, the file path to the vcf(s) for the diploid individual from population 1. Required.
 
--t --type: intakes 1 int, options for input filetypes, 1 = vcf, 2 = tped, 3 = bam. 
+-2 --pop2: intakes one or more strings, the file path to the vcf(s) for the diploid individual from population 2. Required. 
+
+-og --outgroup: intakes one or more strings, the file path to the vcf(s) for the diploid individual from the outgroup population. Required. 
 
 -a --ancestral: intakes 1 string, ancestral states file (with path).
 
