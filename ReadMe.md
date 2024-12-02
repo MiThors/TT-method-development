@@ -22,7 +22,7 @@ All arguments can also be found by typing "python3 TT_Method.py --help" on the c
 
 -1 --pop1: intakes one or more strings, the file path to the vcf(s) for the diploid individual from population 1. Required.
 
--2 --pop2: intakes one or more stirngs, the file path to the vcf(s) for the diploid individual from population 2. Required. 
+-2 --pop2: intakes one or more strings, the file path to the vcf(s) for the diploid individual from population 2. Required. 
 
 -a --ancestral: intakes one or more strings, the file path to the ancestral states file. Information on how to generate these is found [below](#creating-ancestral-state-files). Required.
 
