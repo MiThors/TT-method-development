@@ -42,7 +42,6 @@ parser.add_argument("-k", "--keywords",
                     default = ["pop1", "pop2", "outgroup"],
                     help = "names of 2 populations, MUST be same order as -1 and -2 flag then the outgroup")
 parser.add_argument("-o", "--out", 
-                    default = "TTo_out_pop1_pop2",
                     help = "name of the output directory")
 parser.add_argument("-c", "--counts",
                     action="store_true",
