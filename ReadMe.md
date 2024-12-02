@@ -30,9 +30,9 @@ All arguments can also be found by typing "python3 TT_Method.py --help" on the c
 
 -o --out: intakes one string, the name for the output directory. Optional, defaults "TT_out_pop1_pop2", using the keywords given.
 
--w, --window: intakes one int, the window size for weighted-block jackknife. Optional, default is 2,500,000 which corresponds to about 5cm. 
+-w, --window: intakes one int, the window size for weighted-block jackknife. Optional, default is 2,500,000 which corresponds to about 2.5cM in humans. 
 
--c --counts: flag to print counts per chromosome per window to a counts file in the output directory. Optional, can be used for inspecting when errors during calculations happens, or when results of calculations look strange.
+-c --counts: flag to print counts per chromosome per window to a counts file in the output directory. Optional, can be used for inspecting when errors during calculations happen, or when the results of calculations look strange.
 
 -d --depth_thresholds: required, two ints in the order of Low_Coverage then High_Coverage, the user should define what is too low or too high coverage for their particular dataset
 
