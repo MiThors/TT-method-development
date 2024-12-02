@@ -11,9 +11,6 @@ import argparse
 import os
 import multiprocessing
 import sys
-import time
-
-t0 = time.time()
 
 # Filtering parameters that can be changed by the user
 # All acceptable values in the FILTERS column of a vcf file, default set to be passing all filters or a non-entry
@@ -78,12 +75,9 @@ if any(len(lst) != file_tot for lst in [files_pop2, files_anc]):
 # Make output dir, will complain if it already exists, which is why this is so early in the script
 os.mkdir(out_dir)
 
-
 # Create iterable list for each set of files with all input parameters for multicore counting
 iterables = [[files_pop1[i], files_pop2[i], files_anc[i], low_coverage, high_coverage, vcf_filters, win_size]for i in range(file_tot)]
 
-print("Starting TT Counting")
-print()
 # To avoid infinite recursion
 if __name__ == '__main__':
     with multiprocessing.Pool() as pool:
@@ -91,9 +85,6 @@ if __name__ == '__main__':
         results = pool.map(functions.get_counts_TT, iterables)
     pool.close()
 
-print("TT Counting Complete, combining counts.")
-print()
-    
 # Combine results into a single dictionary of the counts and if user selected, print the counts by chromosome and window and output to file
 counts = []
 if print_counts:
@@ -109,8 +100,6 @@ for comparison in results:
                 count_file.write(str(comparison[chrom][1][i]) + "\t" + str(comparison[chrom][0][i]) + "\n")
 if print_counts: count_file.close()
 
-print("TT counts combined, estimating parameters.")
-print()
 # Obtain estiamtes of the model parameters using the counts. For each parameter is the observed mean from all counts, the wbj mean and the wbj variance
 [alfa1,alfa2,thetaA,mu_t1,mu_t2,mu_nu1,mu_nu2,mu_diff_t1_t2,drift1,drift2,theta1,theta2,W1ratio,W2ratio,D1,D2,P1,P2,P1_time,P2_time,Fst] = functions.get_estimates_TT(counts)
 
@@ -182,7 +171,3 @@ P2_out.close()
 P1_time_out.close()
 P2_time_out.close()
 Fst_out.close()
-
-t1 = time.time()
-total_time = t1-t0
-print(f'Total time for running TT method from initialising the python script: {total_time}')
