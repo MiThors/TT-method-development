@@ -250,21 +250,22 @@ def get_counts_TT(iterable):
                     #if quality_and_filter_check(l1[qual_1_ind], l1[filter_1_ind], filters) == False or quality_and_filter_check(l2[qual_2_ind], l2[filter_2_ind], filters) == False: continue
                     if not '.' in [l1[qual_1_ind], l2[qual_2_ind]]:
                                 if (l1[filter_1_ind] in ['PASS','.']) and (l2[filter_2_ind] in ['PASS','.']):
-                                    [coverage1,genotype1]=get_genotype(l1[9:])
-                                    [coverage2,genotype2]=get_genotype(l2[9:])
-                                    if check_if_pass_coverage(coverage1,low_cov,high_cov) and check_if_pass_coverage(coverage2,low_cov,high_cov):
-                                        if nucl_A in nucl:
-                                            var_form=check_if_ok_and_get_var_form_TT(nucl_A,ref_1,ref_2,alt_1,alt_2)
-                                            if not var_form=='':
-                                                if var_form=='OK_NO_VARIATION':
-                                                    if ref_1==nucl_A:
-                                                        local_count[0] += 1
-                                                    else:
-                                                        local_count[8] += 1
-                                                elif var_form=='OK_POLY':
-                                                    der_count1=orient_and_get_count(genotype1,ref_1,alt_1,nucl_A)
-                                                    der_count2=orient_and_get_count(genotype2,ref_1,alt_2,nucl_A)
-                                                    local_count[get_sample_conf(der_count1,der_count2)] += 1
+                                    if not (low_cov, high_cov) == (0,0):
+                                        [coverage1,genotype1]=get_genotype(l1[9:])
+                                        [coverage2,genotype2]=get_genotype(l2[9:])
+                                        if not check_if_pass_coverage(coverage1,low_cov,high_cov) or not check_if_pass_coverage(coverage2,low_cov,high_cov): continue
+                                    if nucl_A in nucl:
+                                        var_form=check_if_ok_and_get_var_form_TT(nucl_A,ref_1,ref_2,alt_1,alt_2)
+                                        if not var_form=='':
+                                            if var_form=='OK_NO_VARIATION':
+                                                if ref_1==nucl_A:
+                                                    local_count[0] += 1
+                                                else:
+                                                    local_count[8] += 1
+                                            elif var_form=='OK_POLY':
+                                                der_count1=orient_and_get_count(genotype1,ref_1,alt_1,nucl_A)
+                                                der_count2=orient_and_get_count(genotype2,ref_1,alt_2,nucl_A)
+                                                local_count[get_sample_conf(der_count1,der_count2)] += 1
     # Check if the output exists, and if so return it, else there has been an error       
     if out_dict:
         return out_dict
@@ -504,70 +505,45 @@ def get_counts_TTo(iterable):
                             # Series of quality and assumption checks to make sure that we can keep going 
                             if not '.' in [l1[qual_1_ind], l2[qual_2_ind]]:
                                 if (l1[filter_1_ind] in ['PASS','.']) and (l2[filter_2_ind] in ['PASS','.']):
-                                    [coverage1,genotype1]=get_genotype(l1[9:])
-                                    [coverage2,genotype2]=get_genotype(l2[9:])
-                                    if check_if_pass_coverage(coverage1,low_cov,high_cov) and check_if_pass_coverage(coverage2,low_cov,high_cov):
-                                        if nucl_A in nucl:
-                                            var_form=check_if_ok_and_get_var_form_TT(nucl_A,ref_1,ref_2,alt_1,alt_2)
-                                            if not var_form=='':
-                                                if var_form=='OK_NO_VARIATION':
-                                                    if ref_1==nucl_A:
-                                                        local_count_TT[0] += 1
-                                                    else:
-                                                        local_count_TT[8] += 1
-                                                elif var_form=='OK_POLY':
-                                                    der_count1=orient_and_get_count(genotype1,ref_1,alt_1,nucl_A)
-                                                    der_count2=orient_and_get_count(genotype2,ref_1,alt_2,nucl_A)
-                                                    local_count_TT[get_sample_conf(der_count1,der_count2)] += 1
+                                    if not (low_cov, high_cov) == (0,0):
+                                        [coverage1,genotype1]=get_genotype(l1[9:])
+                                        [coverage2,genotype2]=get_genotype(l2[9:])
+                                        if not check_if_pass_coverage(coverage1,low_cov,high_cov) or not check_if_pass_coverage(coverage2,low_cov,high_cov): continue
+                                    if nucl_A in nucl:
+                                        var_form=check_if_ok_and_get_var_form_TT(nucl_A,ref_1,ref_2,alt_1,alt_2)
+                                        if not var_form=='':
+                                            if var_form=='OK_NO_VARIATION':
+                                                if ref_1==nucl_A:
+                                                    local_count_TT[0] += 1
+                                                else:
+                                                    local_count_TT[8] += 1
+                                            elif var_form=='OK_POLY':
+                                                der_count1=orient_and_get_count(genotype1,ref_1,alt_1,nucl_A)
+                                                der_count2=orient_and_get_count(genotype2,ref_1,alt_2,nucl_A)
+                                                local_count_TT[get_sample_conf(der_count1,der_count2)] += 1
                         # Series of quality and assumption checks to make sure that we can keep going
                         if not '.' in [l1[qual_1_ind], l2[qual_2_ind], lo[qual_OG_ind]]:
                                 if (l1[filter_1_ind] in ['PASS','.']) and (l2[filter_2_ind] in ['PASS','.'] and (lo[filter_OG_ind] in ['PASS','.'])):
-                                    [coverage1,genotype1]=get_genotype(l1[9:])
-                                    [coverage2,genotype2]=get_genotype(l2[9:])
-                                    [coverage_ogrp,genotype_ogrp]=get_genotype(lo[9:])
-                                    if check_if_pass_coverage(coverage1,low_cov,high_cov) and check_if_pass_coverage(coverage2,low_cov,high_cov) and check_if_pass_coverage(coverage_ogrp,low_cov,high_cov):
-                                        if nucl_A in nucl:
-                                            var_form=check_if_ok_and_get_var_form(nucl_A,ref_1,ref_2,ref_OG,alt_1,alt_2,alt_OG)
-                                            if not var_form=='':
-                                                der_count_ogrp=orient_and_get_count(genotype_ogrp,ref_OG,alt_OG,nucl_A)
-                                                if der_count_ogrp>0:
-                                                    if var_form=='OK_NO_VARIATION':
-                                                        if ref_1==nucl_A:
-                                                            local_count[0] += 1
-                                                        else:
-                                                            local_count[8] += 1
-                                                    elif var_form=='OK_POLY':
-                                                        der_count1=orient_and_get_count(genotype1,ref_1,alt_1,nucl_A)
-                                                        der_count2=orient_and_get_count(genotype2,ref_1,alt_2,nucl_A)
-                                                        local_count[get_sample_conf(der_count1,der_count2)] += 1
-                        #if '.' in [l1[qual_1_ind], l2[qual_2_ind], lo[qual_OG_ind]]: continue
-                        #if l1[filter_1_ind] not in filters or l2[filter_2_ind] not in filters or lo[filter_OG_ind] not in filters: continue
-                        #l1_format_info = l1[format_1_ind].split(':')
-                        #l2_format_info = l2[format_2_ind].split(':')
-                        #lo_format_info = lo[format_OG_ind].split(':')
-                        #try:
-                            #genotype_1_ind, genotype_2_ind, genotype_OG_ind = l1_format_info.index("GT"), #l2_format_info.index("GT"), lo_format_info.index("GT")
-                            #coverage_1_ind, coverage_2_ind, coverage_OG_ind = l1_format_info.index("DP"), #l2_format_info.index("DP"), lo_format_info.index("DP")
-                        #except ValueError:
-                            #continue
-                        #l1_genotype_info, l2_genotype_info, lo_genotype_info = l1[format_1_ind + 1].split(':'), l2[format_2_ind + 1].split(':'), lo[format_OG_ind + 1].split(':')
-                        #coverage_1, coverage_2, coverage_OG = l1_genotype_info[coverage_1_ind], l2_genotype_info[coverage_2_ind], lo_genotype_info[coverage_OG_ind]
-                        #genotype_1, genotype_2, genotype_OG = l1_genotype_info[genotype_1_ind], l2_genotype_info[genotype_2_ind], lo_genotype_info[genotype_OG_ind]
-                        #if '.' in genotype_1 or '.' in genotype_2 or '.' in genotype_OG: continue # Check if genotypes are undefined
-                        #if bad_coverage(coverage_1, low_cov, high_cov) or bad_coverage(coverage_2, low_cov, high_cov) or bad_coverage(coverage_OG, low_cov, high_cov): continue # Check the coverage is within acceptable thresholds
-                        #if nucl_A not in nucl: continue # If the ancient nucleotide is not resolved, we skip
-                        # Tests to skip sites that satisfy neither TT nor TTo
-                        #nucl_set = set([ref_OG,alt_OG,nucl_A,ref_1,ref_2,alt_1,alt_2]).difference('.')
-                        #if not nucl_set.issubset(nt_set): continue # All nucleotides should be resolved 
-                        #if len(nucl_set) > 2: continue # Checkfor multiallelic sites
-                        # If it passes these checks, we get the genotype and coverage and check if they are also appropriate
-                        #if "2" in genotype_1 or "2" in genotype_2 or "2" in genotype_OG: continue # Check for multiallelic
-                        # TTo conditioning on the outgroup after passing all quality and assumption checks
-                        #if not passed_conditioning(genotype_OG, ref_OG, alt_OG, nucl_A): continue
-                        # Get the type of sample configuration, represented as the index of m0, m1, ... m8
-                        #configuration_index = get_TTo_configuration_index(nucl_A, genotype_1, genotype_2,ref_1, ref_2, alt_1, alt_2, ref_OG, alt_OG)
-                        # Add one count to the relevant chromosome and configuration count
-                        #local_count[configuration_index] += 1
+                                    if not (low_cov, high_cov) == (0,0):
+                                        [coverage1,genotype1]=get_genotype(l1[9:])
+                                        [coverage2,genotype2]=get_genotype(l2[9:])
+                                        [coverage_ogrp,genotype_ogrp]=get_genotype(lo[9:])
+                                        if not check_if_pass_coverage(coverage1,low_cov,high_cov) or not check_if_pass_coverage(coverage2,low_cov,high_cov) or not check_if_pass_coverage(coverage_ogrp,low_cov,high_cov): continue
+                                    if nucl_A in nucl:
+                                        var_form=check_if_ok_and_get_var_form(nucl_A,ref_1,ref_2,ref_OG,alt_1,alt_2,alt_OG)
+                                        if not var_form=='':
+                                            der_count_ogrp=orient_and_get_count(genotype_ogrp,ref_OG,alt_OG,nucl_A)
+                                            if der_count_ogrp>0:
+                                                if var_form=='OK_NO_VARIATION':
+                                                    if ref_1==nucl_A:
+                                                        local_count[0] += 1
+                                                    else:
+                                                        local_count[8] += 1
+                                                elif var_form=='OK_POLY':
+                                                    der_count1=orient_and_get_count(genotype1,ref_1,alt_1,nucl_A)
+                                                    der_count2=orient_and_get_count(genotype2,ref_1,alt_2,nucl_A)
+                                                    local_count[get_sample_conf(der_count1,der_count2)] += 1
+                        
     if out_dict and not count_TT:
         return out_dict, False
     elif out_dict and out_dict_TT:
