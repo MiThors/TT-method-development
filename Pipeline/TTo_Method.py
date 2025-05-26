@@ -50,7 +50,7 @@ parser.add_argument("-d", "--depth_thresholds",
                     required = True,
                     nargs = 2,
                     type = int,
-                    help = "user should define what is too low and too high depth for their given genomes, as it varies greatly sample to sample")
+                    help = "user should define what is too low and too high depth for their given genomes, or input 0 0 to ignore read depth")
 parser.add_argument("-w", "--window",
                     default = 2500000,
                     help = "set the window size for calculating local parameters, default is 5000000 which correspends to about 5 cM")

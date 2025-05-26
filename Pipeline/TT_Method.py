@@ -44,7 +44,7 @@ parser.add_argument("-d", "--depth_thresholds",
                     required = True,
                     nargs = 2,
                     type = int,
-                    help = "user should define what is too low and too high depth for their given genomes, as it varies greatly sample to sample")
+                    help = "user should define what is too low and too high depth for their given genomes, or input 0 0 to ignore read depth")
 parser.add_argument("-w", "--window", 
                     default = 2500000,
                     type = int,
